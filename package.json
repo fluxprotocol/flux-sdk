@@ -1,0 +1,42 @@
+{
+  "name": "flux-sdk",
+  "version": "0.0.1",
+  "description": "Flux protocol SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest test --runInBand"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jasperdg/flux-sdk.git"
+  },
+  "keywords": [
+    "flux",
+    "flux-protocol",
+    "near",
+    "near-protocol",
+    "blockchain",
+    "crypto"
+  ],
+  "author": "jasper de gooijer",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasperdg/flux-sdk/issues"
+  },
+  "homepage": "https://github.com/jasperdg/flux-sdk#readme",
+  "dependencies": {
+    "bn.js": "^5.1.1",
+    "nearlib": "^0.21.0",
+    "node-fetch": "^2.6.0",
+    "whatwg-fetch": "^3.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.3",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/preset-env": "^7.8.3",
+    "babel-jest": "^25.1.0",
+    "babel-plugin-transform-default-import": "^1.0.0",
+    "jest": "^25.1.0",
+    "jest-cli": "^25.1.0"
+  }
+}
