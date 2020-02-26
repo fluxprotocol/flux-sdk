@@ -22,27 +22,34 @@ class FluxProvider {
 		if (this.walletAccount.isSignedIn()) this.account = await this.near.account(this.walletAccount.getAccountId());
 	}
 
-	async createBinaryMarket(description, end_time) {
+	async createBinaryMarket(description, endTime) {
+		// Check if caller is signed in
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (end_time < new Date().getTime()) throw new Error("End time has already passed");
-		try {
+		// Check if the endTime provided hasn't already passed
+		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
+			// This method has to be called through the account object - this is because we want to alter the gas amount attached to this method call
+			// For all "change methods" (that cost gas because they alter state) we're using the account object for consistency's sake
 			await this.account.functionCall(
-				this.contract.contractId,
-				"create_market",
+				this.contract.contractId, // Contract you want to call
+				"create_market", // Method you want to call
+				// Params
 				{
 					outcomes: 2,
 					description,
-					end_time,
+					end_time: endTime,
 				},
+				// Gas attached
 				new BN("10000000000000"),
+				// Near attached (deposit)
 				new BN("0")
-			)
-		} catch(err) {
-			throw new Error(err);
-		}
+			).catch(err => {
+				throw new Error(err)
+			})
 	}
 
 	async getAllMarkets() {
+		// For this method call we can use the contract object because the method we're calling is a "view method" hence it won't cost gas. 
+		// For methods that don't cost gas we don't need the account object
 		return await this.contract.get_all_markets();
 	}
 
@@ -50,6 +57,7 @@ class FluxProvider {
 		this.walletAccount.requestSignIn();
 	}
 	getAccountId() {
+		// Get the id of the account that's currently signedIn - will return undefined if not signed in
 		return this.walletAccount.getAccountId();
 	}
 
