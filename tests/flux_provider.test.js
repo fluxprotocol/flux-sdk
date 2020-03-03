@@ -46,23 +46,37 @@ test("Is able to fetch all markets", async () => {
 	expect(Object.keys(allMarkets).length).toBe(1);
 });
 
-test("Is able to place an order", async () => {
+test("Is able to place a limit order", async () => {
 	await flux.placeOrder(0, 0, 5000, 10);
 });
 
-test("Is able to fetch open orders", async () => {
-	const openOrders = await flux.getOpenOrders();
+test("Is able to place a market order", async() => {
+	// TODO: Figure out market order price
+	// await flux.placeOrder()
+});
+
+test("Is able to fetch open limit orders", async () => {
+	const openOrders = await flux.getOpenOrders(0, 0);
 	expect(Object.keys(openOrders)).not.toBe(0);
 });
 
+test("Is able to fetch all open market orders", async () => {
+	await flux.getMarketOrder(0, 0)
+});
+
+test("Is able to cancel an order", async () => {
+	await flux.cancelOrder(0, 0, 0)
+});
+
+
 test("Is able to fetch filled orders", async () => {
 	// TODO: Fill order
-	const filledOrders = await flux.getFilledOrders();
+	const filledOrders = await flux.getFilledOrders(0, 0);
 	expect(Object.keys(filledOrders)).not.toBe(0);
 });
 
 test("Is able to fetch claimable orders", async () => {
 	// TODO: Ensure an order filled, resolve market
-	const claimable = await flux.getClaimable();
+	const claimable = await flux.getClaimable(0);
 	expect(Object.keys(claimable)).not.toBe(0);
 });
