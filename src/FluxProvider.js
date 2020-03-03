@@ -9,7 +9,8 @@ class FluxProvider {
 		this.walletAccount = null;
 		this.account = account;
 	}
-	
+
+	// Connects to deployed contract, stores in this.contract
 	async connect(config, accountId) {
 		this.near = await nearlib.connect(config);
 		this.walletAccount = new nearlib.WalletAccount(this.near);
@@ -47,10 +48,45 @@ class FluxProvider {
 			})
 	}
 
+	async placeOrder(market_id, outcome, spend, price_per_share) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (market_id < 0) throw new Error("Invalid market id");
+		if (outcome < 0) throw new Error("Invalid outcome id");
+		if (spend < 0 )  throw new Error("Invalid spend");
+		if (price_per_share < 0 ) throw new Error("Invalid price per share");
+
+		await this.account.functionCall(
+			this.contract.contractId,
+			"place_order",
+			{
+				market_id,
+				outcome,
+				spend,
+				price_per_share
+			},
+			new BN("10000000000000"),
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		})
+	}
+
 	async getAllMarkets() {
 		// For this method call we can use the contract object because the method we're calling is a "view method" hence it won't cost gas. 
 		// For methods that don't cost gas we don't need the account object
 		return await this.contract.get_all_markets();
+	}
+
+	async getOpenOrders(market_id, outcome) {
+		return await this.contract.get_open_orders(market_id, outcome, this.getAccountId());
+	}
+
+	async getFilledOrders(market_id, outcome) {
+		return await this.contract.get_filled_orders(market_id, outcome, this.getAccountId());
+	}
+
+	async getClaimable(market_id) {
+		return await this.contract.get_claimable(market_id, this.getAccountId());
 	}
 
 	signIn() {
