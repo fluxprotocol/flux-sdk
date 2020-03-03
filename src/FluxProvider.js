@@ -16,7 +16,7 @@ class FluxProvider {
 		this.walletAccount = new nearlib.WalletAccount(this.near);
 
 		this.contract = await this.near.loadContract(accountId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics", "get_claimable"],
 			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletAccount.getAccountId(),
 		});
@@ -59,10 +59,10 @@ class FluxProvider {
 			this.contract.contractId,
 			"place_order",
 			{
-				market_id,
-				outcome,
-				spend,
-				price_per_share
+				market_id: market_id,
+				outcome: outcome,
+				spend: spend,
+				price_per_share: price_per_share
 			},
 			new BN("10000000000000"),
 			new BN("0")
@@ -78,15 +78,26 @@ class FluxProvider {
 	}
 
 	async getOpenOrders(market_id, outcome) {
-		return await this.contract.get_open_orders(market_id, outcome, this.getAccountId());
+		return await this.contract.get_open_orders({
+			market_id: market_id,
+			outcome: outcome,
+			from: this.getAccountId()
+		});
 	}
 
 	async getFilledOrders(market_id, outcome) {
-		return await this.contract.get_filled_orders(market_id, outcome, this.getAccountId());
+		return await this.contract.get_filled_orders({
+			market_id: market_id,
+			outcome: outcome,
+			from: this.getAccountId()
+		});
 	}
 
 	async getClaimable(market_id) {
-		return await this.contract.get_claimable(market_id, this.getAccountId());
+		return await this.contract.get_claimable({
+			market_id: market_id,
+			from: this.getAccountId()
+		});
 	}
 
 	signIn() {
