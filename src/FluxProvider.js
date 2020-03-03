@@ -17,7 +17,7 @@ class FluxProvider {
 
 		this.contract = await this.near.loadContract(accountId, {
 			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics", "get_claimable"],
-			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market"],
+			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market", "cancel_order"],
 			sender: this.walletAccount.getAccountId(),
 		});
 		if (this.walletAccount.isSignedIn()) this.account = await this.near.account(this.walletAccount.getAccountId());
@@ -62,13 +62,34 @@ class FluxProvider {
 				market_id: market_id,
 				outcome: outcome,
 				spend: spend,
-				price_per_share: price_per_share
+				price_per_share: price_per_share,
 			},
 			new BN("10000000000000"),
 			new BN("0")
 		).catch(err => {
 			throw new Error(err)
-		})
+		});
+	}
+
+	async cancelOrder(market_id, outcome, order_id) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (market_id < 0) throw new Error("Invalid market id");
+		if (outcome < 0) throw new Error("Invalid outcome id");
+		if (order_id < 0 )  throw new Error("Invalid order id");
+
+		await this.account.functionCall(
+			this.contract.contractId,
+			"cancel_order",
+			{
+				market_id: market_id,
+				outcome: outcome,
+				order_id: order_id,
+			},
+			new BN("10000000000000"),
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		});
 	}
 
 	async getAllMarkets() {
@@ -97,6 +118,13 @@ class FluxProvider {
 		return await this.contract.get_claimable({
 			market_id: market_id,
 			from: this.getAccountId()
+		});
+	}
+
+	async getMarketOrder(market_id, outcome) {
+		return await this.contract.get_market_order({
+			market_id: market_id,
+			outcome: outcome,
 		});
 	}
 
