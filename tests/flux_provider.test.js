@@ -37,46 +37,85 @@ test("Is able to retrieve the accountId ", () => {
 	expect(accountId).toBe("");
 });
 
+test("Is able to claim fdai", async () => {
+	await flux.claimFDai()
+});
+
+test("Is able to retrieve fdai balance of caller", async () => {
+	const balance = await flux.getFDaiBalance();
+	expect(balance).toBeGreaterThan(0);
+});
+
 test("Is able to create a market", async () => {
-	await flux.createBinaryMarket("This is a test market", new Date().getTime() + 10000);
+	await flux.createBinaryMarket("This is a test binary market", new Date().getTime() + 10000);
+	await flux.createCategoricalMarket("This is a test categorical market", ["yes", "no", "maybe"], new Date().getTime() + 10000);
 });
 
 test("Is able to fetch all markets", async () => {
 	const allMarkets = await flux.getAllMarkets();
-	expect(Object.keys(allMarkets).length).toBe(1);
+	expect(Object.keys(allMarkets).length).toBe(2);
 });
 
 test("Is able to place a limit order", async () => {
 	await flux.placeOrder(0, 0, 5000, 10);
-});
-
-test("Is able to place a market order", async() => {
-	// TODO: Figure out market order price
-	// await flux.placeOrder()
+	await flux.placeOrder(1, 0, 5000, 10);
 });
 
 test("Is able to fetch open limit orders", async () => {
-	const openOrders = await flux.getOpenOrders(0, 0);
-	expect(Object.keys(openOrders)).not.toBe(0);
+	const openBinaryOrders = await flux.getOpenOrders(0, 0);
+	const openCategoricalOrders = await flux.getOpenOrders(1, 0);
+	expect(Object.keys(openBinaryOrders)).not.toBe(0);
+	expect(Object.keys(openCategoricalOrders)).not.toBe(0);
 });
 
-test("Is able to fetch all open market orders", async () => {
-	await flux.getMarketOrder(0, 0)
+// TODO: ASK WHAT THIS METHOD DOES
+test("Is able to fetch open market orders", async () => {
+	await flux.getMarketOrder(0, 0);
+	await flux.getMarketOrder(1, 0);
 });
 
 test("Is able to cancel an order", async () => {
-	await flux.cancelOrder(0, 0, 0)
+	await flux.cancelOrder(0, 0, 0);
+	await flux.cancelOrder(1, 0, 0);
 });
 
+test("Is able to delete a market", async () => {
+	await flux.createBinaryMarket("This market will be deleted", new Date().getTime() + 10000);
+	await flux.createCategoricalMarket("This market will be deleted",["yes", "no", "maybe"], new Date().getTime() + 10000);
+	await flux.deleteMarket(2);
+	await flux.deleteMarket(3);
+
+	// TODO: Clean up "expects" to handle undefined behaviour
+	//expect(flux.placeOrder(2, 0, 100, 50)).rejects.toEqual(new Error("send_tx_commit has timed out"));
+	//expect(flux.placeOrder(3, 0, 100, 50)).rejects.toEqual(new Error("send_tx_commit has timed out"));
+});
+
+test("Is able to fill a limit order", async () => {
+	await flux.placeOrder(0, 0, 100, 50);
+	await flux.placeOrder(1, 1, 100, 50);
+});
+
+test("Is able to fill a market order", async () => {
+	await flux.placeOrder(0, 0, 200, 50);
+	await flux.placeOrder(1, 0, 200, 50);
+	const binaryPrice = await flux.getMarketPrice(0, 1);
+	const categoricalPrice = await flux.getMarketPrice(1, 1);
+	await flux.placeOrder(0, 1, 200, binaryPrice);
+	await flux.placeOrder(1, 1, 200, categoricalPrice);
+});
 
 test("Is able to fetch filled orders", async () => {
-	// TODO: Fill order
-	const filledOrders = await flux.getFilledOrders(0, 0);
-	expect(Object.keys(filledOrders)).not.toBe(0);
+	const filledBinaryOrders = await flux.getFilledOrders(0, 0);
+	const filledCategoricalOrders = await flux.getFilledOrders(1, 0);
+	expect(Object.keys(filledBinaryOrders)).not.toBe(0);
+	expect(Object.keys(filledCategoricalOrders)).not.toBe(0);
 });
 
-test("Is able to fetch claimable orders", async () => {
-	// TODO: Ensure an order filled, resolve market
-	const claimable = await flux.getClaimable(0);
-	expect(Object.keys(claimable)).not.toBe(0);
+test("Is able to fetch claimable fdai", async () => {
+	await flux.resolute(0, 1);
+	await flux.resolute(1, 1);
+	const binaryClaimable = await flux.getClaimable(0);
+	const categoricalClaimable = await flux.getClaimable(0);
+	expect(Object.keys(binaryClaimable)).not.toBe(0);
+	expect(Object.keys(categoricalClaimable)).not.toBe(0);
 });

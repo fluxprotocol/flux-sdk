@@ -16,8 +16,8 @@ class FluxProvider {
 		this.walletAccount = new nearlib.WalletAccount(this.near);
 
 		this.contract = await this.near.loadContract(accountId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics", "get_claimable"],
-			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market", "cancel_order"],
+			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics", "get_claimable", "get_market_price"],
+			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute", "cancel_order"],
 			sender: this.walletAccount.getAccountId(),
 		});
 		if (this.walletAccount.isSignedIn()) this.account = await this.near.account(this.walletAccount.getAccountId());
@@ -37,6 +37,8 @@ class FluxProvider {
 				{
 					outcomes: 2,
 					description,
+					extra_info: "",
+					outcome_tags: [],
 					end_time: endTime,
 				},
 				// Gas attached
@@ -46,6 +48,62 @@ class FluxProvider {
 			).catch(err => {
 				throw new Error(err)
 			})
+	}
+
+	async createCategoricalMarket(description, outcome_tags, endTime) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (outcome_tags.length <=2) throw new Error("Need three or more outcome tags");
+		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
+		await this.account.functionCall(
+			this.contract.contractId,
+			"create_market",
+			// Params
+			{
+				outcomes: outcome_tags.length,
+				description,
+				extra_info: "",
+				outcome_tags: outcome_tags,
+				end_time: endTime,
+			},
+			// Gas attached
+			new BN("10000000000000"),
+			// Near attached (deposit)
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		})
+	}
+
+	async claimFDai() {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+
+		await this.account.functionCall(
+			this.contract.contractId,
+			"claim_fdai",
+			{},
+			new BN("10000000000000"),
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		})
+	}
+
+	async deleteMarket(market_id) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (market_id < 0) throw new Error("Invalid market id");
+
+		await this.account.functionCall(
+			this.contract.contractId,
+			"delete_market",
+			{
+				market_id: market_id,
+			},
+			new BN("10000000000000"),
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		})
+
 	}
 
 	async placeOrder(market_id, outcome, spend, price_per_share) {
@@ -92,10 +150,35 @@ class FluxProvider {
 		});
 	}
 
+	async resolute(market_id, winning_outcome) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (market_id < 0) throw new Error("Invalid market id");
+		if (winning_outcome < 0) throw new Error("Invalid outcome id");
+
+		await this.account.functionCall(
+			this.contract.contractId,
+			"resolute",
+			{
+				market_id: market_id,
+				winning_outcome: winning_outcome,
+			},
+			new BN("10000000000000"),
+			new BN("0")
+		).catch(err => {
+			throw new Error(err)
+		})
+	}
+
 	async getAllMarkets() {
 		// For this method call we can use the contract object because the method we're calling is a "view method" hence it won't cost gas. 
 		// For methods that don't cost gas we don't need the account object
 		return await this.contract.get_all_markets();
+	}
+
+	async getFDaiBalance() {
+		return await this.contract.get_fdai_balance({
+			from: this.getAccountId()
+		});
 	}
 
 	async getOpenOrders(market_id, outcome) {
@@ -123,6 +206,13 @@ class FluxProvider {
 
 	async getMarketOrder(market_id, outcome) {
 		return await this.contract.get_market_order({
+			market_id: market_id,
+			outcome: outcome,
+		});
+	}
+
+	async getMarketPrice(market_id, outcome) {
+		return await this.contract.get_market_price({
 			market_id: market_id,
 			outcome: outcome,
 		});
