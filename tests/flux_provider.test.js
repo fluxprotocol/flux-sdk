@@ -84,15 +84,6 @@ test("Is able to cancel an order", async () => {
 	await flux.cancelOrder(1, 0, 0);
 });
 
-test("Is able to delete a market", async () => {
-	await flux.createBinaryMarket("This is a test binary market", "", new Date().getTime() + 10000);
-	await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"], new Date().getTime() + 10000);
-
-	// Should fail because we are not the contract creators
-	expect(await flux.deleteMarket(2)).to.equal(false);
-	expect(await flux.deleteMarket(3)).to.equal(false);
-});
-
 test("Is able to fill a limit order", async () => {
 	await flux.placeOrder(0, 0, 100, 50);
 	await flux.placeOrder(1, 1, 100, 50);

@@ -19,7 +19,7 @@ class FluxProvider {
 		this.account = this.walletConnection.account();
 		this.contract = new nearlib.Contract(this.account, contractId, {
 			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
-			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market"],
+			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletConnection.getAccountId(),
 		});
 	}
@@ -67,24 +67,6 @@ class FluxProvider {
 		).catch(err => {
 			throw new Error(err)
 		})
-	}
-
-	async deleteMarket(market_id) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (market_id < 0) throw new Error("Invalid market id");
-
-		await this.account.functionCall(
-			this.contract.contractId,
-			"delete_market",
-			{
-				market_id: market_id,
-			},
-			PREPAID_GAS_BASE,
-			ZERO
-		).catch(err => {
-			throw new Error(err)
-		})
-
 	}
 
 	async placeOrder(market_id, outcome, spend, price_per_share) {
