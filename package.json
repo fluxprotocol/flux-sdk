@@ -26,7 +26,7 @@
   "homepage": "https://github.com/jasperdg/flux-sdk#readme",
   "dependencies": {
     "bn.js": "^5.1.1",
-    "nearlib": "^0.21.0",
+    "nearlib": "^0.22.0",
     "node-fetch": "^2.6.0",
     "whatwg-fetch": "^3.0.0"
   },
