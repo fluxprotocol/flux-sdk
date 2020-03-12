@@ -2,30 +2,36 @@ const nearlib = require('nearlib');
 const BN = require('bn.js');
 
 class FluxProvider {
-	constructor(account = null) {
-		this.connected = false;
+	constructor() {
 		this.near = null;
 		this.contract = null;
-		this.walletAccount = null;
-		this.account = account;
+		this.walletConnection = null;
+		this.account = null;
 	}
 
 	// Connects to deployed contract, stores in this.contract
-	async connect(config, accountId) {
+	async connect(config, contractId) {
 		this.near = await nearlib.connect(config);
-		this.walletAccount = new nearlib.WalletAccount(this.near);
-
-		this.contract = await this.near.loadContract(accountId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_earnings", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
+		this.account = this.walletConnection.account();
+		this.contract = new nearlib.Contract(this.account, contractId, {
+			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
 			changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market"],
-			sender: this.walletAccount.getAccountId(),
+			sender: this.walletConnection.getAccountId(),
 		});
-		if (this.walletAccount.isSignedIn()) this.account = await this.near.account(this.walletAccount.getAccountId());
 	}
 
-	async createBinaryMarket(description, endTime) {
+	createBinaryMarket(description, extraInfo, endTime) {
+		return this.createMarket(description, extraInfo, 2, [], endTime);
+	}
+
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, endTime);
+	}
+
+	async createMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
 		// Check if caller is signed in
-		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		// Check if the endTime provided hasn't already passed
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 			// This method has to be called through the account object - this is because we want to alter the gas amount attached to this method call
@@ -35,9 +41,11 @@ class FluxProvider {
 				"create_market", // Method you want to call
 				// Params
 				{
-					outcomes: 2,
 					description,
-					end_time: endTime,
+					extra_info: extraInfo,
+					outcomes,
+					outcome_tags: outcomeTags,
+					end_time: endTime
 				},
 				// Gas attached
 				new BN("10000000000000"),
@@ -90,11 +98,19 @@ class FluxProvider {
 	}
 
 	signIn() {
-		this.walletAccount.requestSignIn();
+		this.walletConnection.requestSignIn();
 	}
 	getAccountId() {
 		// Get the id of the account that's currently signedIn - will return undefined if not signed in
-		return this.walletAccount.getAccountId();
+		return this.walletConnection.getAccountId();
+	}
+
+	// TODO: make these methods absolete, only needed for demo purposes
+	async claimFDai() {
+		return this.contract.claim_fdai();
+	}
+	async getFDaiBalance() {
+		return this.contract.get_fdai_balance();
 	}
 
 }
