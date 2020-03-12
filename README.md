@@ -15,13 +15,19 @@ npm install --save flux-sdk
 ### Initialization
 
 ```js
-import Flux from "flux-sdk"
+import Flux from "flux-sdk";
+
 (async () => 
 	const flux = await new Flux().connect("development", "flux-protocol-staging");
-)()
+)();
 ```
 
 ### Methods
+
+| Method        | Params           | Returns  |
+| ------------- |:-------------:| -----:|
+| connect      | environment: String, fluxContractAddress: String  | Promise<FluxInstance> |
+
 
 ## Running tests
 
@@ -36,7 +42,8 @@ cd ./nearcore
 python ./scripts/start_unittest.py
 ```
 
-When the image is up and running, navigate to `/flux-sdk` and run the `npm test`
+When the image is up and running navigate to `/flux-sdk` and run the `npm test`
+
 
 ## Future work
 
