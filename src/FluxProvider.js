@@ -18,7 +18,7 @@ class FluxProvider {
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
 		this.contract = new nearlib.Contract(this.account, contractId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
 			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletConnection.getAccountId(),
 		});
@@ -166,14 +166,8 @@ class FluxProvider {
 		});
 	}
 
-	async getMarketOrder(market_id, outcome) {
-		return await this.contract.get_market_order({
-			market_id: market_id,
-			outcome: outcome,
-		});
-	}
-
 	async getMarketPrice(market_id, outcome) {
+		console.log(this.contract);
 		return await this.contract.get_market_price({
 			market_id: market_id,
 			outcome: outcome,

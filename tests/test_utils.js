@@ -27,8 +27,8 @@ async function setUpTestFluxConnection(workingAccount, contractId) {
     };
 
     const contract = new nearlib.Contract(workingAccount, contractId, {
-        viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_order", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
-        changeMethods: ["create_market", "claim_fdai" ,"delete_market", "place_order", "claim_earnings", "resolute_market"],
+        viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+        changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
         sender: walletConnection.getAccountId(),
     });
 
