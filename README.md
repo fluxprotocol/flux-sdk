@@ -26,7 +26,7 @@ import Flux from "flux-sdk";
 
 | Method        | Params           | Returns  |
 | ------------- |:-------------:| -----:|
-| connect      | environment: String, fluxContractAddress: String  | Promise<FluxInstance> |
+| connect      | environment: String \n fluxContractAddress: String  | Promise<FluxInstance> |
 
 
 ## Running tests
