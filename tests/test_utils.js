@@ -1,6 +1,5 @@
 const fs = require('fs').promises;
 const BN = require('bn.js');
-
 const nearlib = require('nearlib');
 
 const networkId = 'unittest';
