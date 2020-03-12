@@ -73,12 +73,6 @@ test("Is able to fetch open limit orders", async () => {
 	expect(Object.keys(openCategoricalOrders)).not.toBe(0);
 });
 
-// TODO: ASK WHAT THIS METHOD DOES
-test("Is able to fetch open market orders", async () => {
-	await flux.getMarketOrder(0, 0);
-	await flux.getMarketOrder(1, 0);
-});
-
 test("Is able to cancel an order", async () => {
 	await flux.cancelOrder(0, 0, 0);
 	await flux.cancelOrder(1, 0, 0);
