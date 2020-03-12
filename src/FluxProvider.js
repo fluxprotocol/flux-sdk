@@ -1,6 +1,9 @@
 const nearlib = require('nearlib');
 const BN = require('bn.js');
 
+const PREPAID_GAS_BASE = new BN("10000000000000000000");
+const ZERO = new BN("0");
+
 class FluxProvider {
 	constructor() {
 		this.near = null;
@@ -26,60 +29,32 @@ class FluxProvider {
 	}
 
 	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
+		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
 		return this.createMarket(description, extraInfo, outcomes, outcomeTags, endTime);
 	}
 
 	async createMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
-		// Check if caller is signed in
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
-		// Check if the endTime provided hasn't already passed
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
-			// This method has to be called through the account object - this is because we want to alter the gas amount attached to this method call
-			// For all "change methods" (that cost gas because they alter state) we're using the account object for consistency's sake
-			await this.account.functionCall(
-				this.contract.contractId, // Contract you want to call
-				"create_market", // Method you want to call
-				// Params
-				{
-					description,
-					extra_info: extraInfo,
-					outcomes,
-					outcome_tags: outcomeTags,
-					end_time: endTime
-				},
-				// Gas attached
-				new BN("10000000000000"),
-				// Near attached (deposit)
-				new BN("0")
-			).catch(err => {
-				throw new Error(err)
-			})
-	}
 
-	async createCategoricalMarket(description, outcome_tags, endTime) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (outcome_tags.length <=2) throw new Error("Need three or more outcome tags");
-		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 		await this.account.functionCall(
-			this.contract.contractId,
-			"create_market",
-			// Params
+			this.contract.contractId, // Target contract
+			"create_market", // Method call
 			{
-				outcomes: outcome_tags.length,
 				description,
-				extra_info: "",
-				outcome_tags: outcome_tags,
-				end_time: endTime,
+				extra_info: extraInfo,
+				outcomes,
+				outcome_tags: outcomeTags,
+				end_time: endTime
 			},
-			// Gas attached
-			new BN("10000000000000"),
-			// Near attached (deposit)
-			new BN("0")
+			PREPAID_GAS_BASE, // Prepaid gas
+			ZERO // NEAR deposit
 		).catch(err => {
 			throw new Error(err)
 		})
 	}
 
+	// TODO: make absolete, just here for demo purposes
 	async claimFDai() {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 
@@ -87,8 +62,8 @@ class FluxProvider {
 			this.contract.contractId,
 			"claim_fdai",
 			{},
-			new BN("10000000000000"),
-			new BN("0")
+			PREPAID_GAS_BASE,
+			ZERO
 		).catch(err => {
 			throw new Error(err)
 		})
@@ -104,8 +79,8 @@ class FluxProvider {
 			{
 				market_id: market_id,
 			},
-			new BN("10000000000000"),
-			new BN("0")
+			PREPAID_GAS_BASE,
+			ZERO
 		).catch(err => {
 			throw new Error(err)
 		})
@@ -128,8 +103,8 @@ class FluxProvider {
 				spend: spend,
 				price_per_share: price_per_share,
 			},
-			new BN("10000000000000"),
-			new BN("0")
+			PREPAID_GAS_BASE,
+			ZERO
 		).catch(err => {
 			throw new Error(err)
 		});
@@ -149,8 +124,8 @@ class FluxProvider {
 				outcome: outcome,
 				order_id: order_id,
 			},
-			new BN("10000000000000"),
-			new BN("0")
+			PREPAID_GAS_BASE,
+			ZERO
 		).catch(err => {
 			throw new Error(err)
 		});
@@ -168,19 +143,18 @@ class FluxProvider {
 				market_id: market_id,
 				winning_outcome: winning_outcome,
 			},
-			new BN("10000000000000"),
-			new BN("0")
+			PREPAID_GAS_BASE,
+			ZERO
 		).catch(err => {
 			throw new Error(err)
 		})
 	}
 
 	async getAllMarkets() {
-		// For this method call we can use the contract object because the method we're calling is a "view method" hence it won't cost gas. 
-		// For methods that don't cost gas we don't need the account object
 		return await this.contract.get_all_markets();
 	}
 
+	// TODO: make absolete, just here for demo purposes
 	async getFDaiBalance() {
 		return await this.contract.get_fdai_balance({
 			from: this.getAccountId()
@@ -228,16 +202,7 @@ class FluxProvider {
 		this.walletConnection.requestSignIn();
 	}
 	getAccountId() {
-		// Get the id of the account that's currently signedIn - will return undefined if not signed in
 		return this.walletConnection.getAccountId();
-	}
-
-	// TODO: make these methods absolete, only needed for demo purposes
-	async claimFDai() {
-		return this.contract.claim_fdai();
-	}
-	async getFDaiBalance() {
-		return this.contract.get_fdai_balance();
 	}
 
 }

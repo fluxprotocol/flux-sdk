@@ -52,8 +52,8 @@ test("Is able to retrieve fdai balance of caller", async () => {
 });
 
 test("Is able to create a market", async () => {
-	await flux.createBinaryMarket("This is a test binary market", new Date().getTime() + 10000);
-	await flux.createCategoricalMarket("This is a test categorical market", ["yes", "no", "maybe"], new Date().getTime() + 10000);
+	await flux.createBinaryMarket("This is a test binary market", "", new Date().getTime() + 10000);
+	await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"], new Date().getTime() + 10000);
 });
 
 test("Is able to fetch all markets", async () => {
@@ -85,14 +85,12 @@ test("Is able to cancel an order", async () => {
 });
 
 test("Is able to delete a market", async () => {
-	await flux.createBinaryMarket("This market will be deleted", new Date().getTime() + 10000);
-	await flux.createCategoricalMarket("This market will be deleted",["yes", "no", "maybe"], new Date().getTime() + 10000);
-	await flux.deleteMarket(2);
-	await flux.deleteMarket(3);
+	await flux.createBinaryMarket("This is a test binary market", "", new Date().getTime() + 10000);
+	await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"], new Date().getTime() + 10000);
 
-	// TODO: Clean up "expects" to handle undefined behaviour
-	//expect(flux.placeOrder(2, 0, 100, 50)).rejects.toEqual(new Error("send_tx_commit has timed out"));
-	//expect(flux.placeOrder(3, 0, 100, 50)).rejects.toEqual(new Error("send_tx_commit has timed out"));
+	// Should fail because we are not the contract creators
+	expect(await flux.deleteMarket(2)).to.equal(false);
+	expect(await flux.deleteMarket(3)).to.equal(false);
 });
 
 test("Is able to fill a limit order", async () => {
