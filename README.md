@@ -25,12 +25,11 @@ import Flux from "flux-sdk";
 ### Methods
 
 | Method        | Description           |
-| ------------- |-------------:|
-| connect(environment: string, fluxContractAddress: string)      | Connect to the NEAR blockchain and initiate a connection with the Flux contract  |
-| createBinaryMarket(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
-| createCategoricalMarket(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
-
-	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
+| ------------- |-------------|
+| **connect**(environment: string, fluxContractAddress: string)      | Connect to the NEAR blockchain and initiate a connection with the Flux contract  |
+| **createBinaryMarket**(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
+| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
+| **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
 
 ## Running tests
 

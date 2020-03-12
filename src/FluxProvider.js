@@ -74,7 +74,7 @@ class FluxProvider {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
-		if (spend < 0 )  throw new Error("Invalid spend");
+		if (spend < 0 || spend > 99)  throw new Error("Invalid spend, spend needs to be between 1 and 99");
 		if (pricePerShare < 0 ) throw new Error("Invalid price per share");
 
 		return this.account.functionCall(
