@@ -24,10 +24,13 @@ import Flux from "flux-sdk";
 
 ### Methods
 
-| Method        | Params           | Returns  |
-| ------------- |:-------------:| -----:|
-| connect      | environment: String \n fluxContractAddress: String  | Promise<FluxInstance> |
+| Method        | Description           |
+| ------------- |-------------:|
+| connect(environment: string, fluxContractAddress: string)      | Connect to the NEAR blockchain and initiate a connection with the Flux contract  |
+| createBinaryMarket(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
+| createCategoricalMarket(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
 
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
 
 ## Running tests
 
