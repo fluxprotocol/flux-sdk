@@ -70,21 +70,21 @@ class FluxProvider {
 		})
 	}
 
-	async placeOrder(market_id, outcome, spend, price_per_share) {
+	async placeOrder(marketId, outcome, spend, pricePerShare) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (market_id < 0) throw new Error("Invalid market id");
+		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
 		if (spend < 0 )  throw new Error("Invalid spend");
-		if (price_per_share < 0 ) throw new Error("Invalid price per share");
+		if (pricePerShare < 0 ) throw new Error("Invalid price per share");
 
 		return this.account.functionCall(
 			this.contract.contractId,
 			"place_order",
 			{
-				market_id: market_id,
+				market_id: marketId,
 				outcome: outcome,
 				spend: spend,
-				price_per_share: price_per_share,
+				price_per_share: pricePerShare,
 			},
 			PREPAID_GAS_BASE,
 			ZERO
@@ -93,19 +93,19 @@ class FluxProvider {
 		});
 	}
 
-	async cancelOrder(market_id, outcome, order_id) {
+	async cancelOrder(marketId, outcome, orderId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (market_id < 0) throw new Error("Invalid market id");
+		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
-		if (order_id < 0 )  throw new Error("Invalid order id");
+		if (orderId < 0 )  throw new Error("Invalid order id");
 
 		return this.account.functionCall(
 			this.contract.contractId,
 			"cancel_order",
 			{
-				market_id: market_id,
+				market_id: marketId,
 				outcome: outcome,
-				order_id: order_id,
+				order_id: orderId,
 			},
 			PREPAID_GAS_BASE,
 			ZERO
@@ -114,17 +114,17 @@ class FluxProvider {
 		});
 	}
 
-	async resolute(market_id, winning_outcome) {
+	async resolute(marketId, winningOutcome) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (market_id < 0) throw new Error("Invalid market id");
-		if (winning_outcome < 0) throw new Error("Invalid outcome id");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (winningOutcome < 0) throw new Error("Invalid outcome id");
 
 		return this.account.functionCall(
 			this.contract.contractId,
 			"resolute",
 			{
-				market_id: market_id,
-				winning_outcome: winning_outcome,
+				market_id: marketId,
+				winning_outcome: winningOutcome,
 			},
 			PREPAID_GAS_BASE,
 			ZERO
@@ -144,32 +144,32 @@ class FluxProvider {
 		});
 	}
 
-	async getOpenOrders(market_id, outcome) {
+	async getOpenOrders(marketId, outcome) {
 		return this.contract.get_open_orders({
-			market_id: market_id,
+			market_id: marketId,
 			outcome: outcome,
 			from: this.getAccountId()
 		});
 	}
 
-	async getFilledOrders(market_id, outcome) {
+	async getFilledOrders(marketId, outcome) {
 		return this.contract.get_filled_orders({
-			market_id: market_id,
+			market_id: marketId,
 			outcome: outcome,
 			from: this.getAccountId()
 		});
 	}
 
-	async getClaimable(market_id) {
+	async getClaimable(marketId) {
 		return this.contract.get_claimable({
-			market_id: market_id,
+			market_id: marketId,
 			from: this.getAccountId()
 		});
 	}
 
-	async getMarketPrice(market_id, outcome) {
+	async getMarketPrice(marketId, outcome) {
 		return this.contract.get_market_price({
-			market_id: market_id,
+			market_id: marketId,
 			outcome: outcome,
 		});
 	}
