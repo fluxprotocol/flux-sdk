@@ -1,6 +1,5 @@
 `use strict`
 const FluxProvider = require('../src/FluxProvider');
-const nearlib = require('nearlib');
 const testUtils = require('./test_utils');
 const BN = require("bn.js");
 import 'whatwg-fetch';

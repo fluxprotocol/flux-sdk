@@ -1,5 +1,6 @@
-const nearlib = require('nearlib');
-const BN = require('bn.js');
+import nearlib from 'nearlib';
+import BN from 'bn.js';
+import getConfig from './../tests/config';
 
 const PREPAID_GAS_BASE = new BN("10000000000000000000");
 const ZERO = new BN("0");
@@ -13,8 +14,8 @@ class FluxProvider {
 	}
 
 	// Connects to deployed contract, stores in this.contract
-	async connect(config, contractId) {
-		this.near = await nearlib.connect(config);
+	async connect(environment, contractId) {
+		this.near = await nearlib.connect(getConfig(environment));
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
 		this.contract = new nearlib.Contract(this.account, contractId, {
