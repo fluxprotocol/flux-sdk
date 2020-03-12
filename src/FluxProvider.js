@@ -37,7 +37,7 @@ class FluxProvider {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 
-		await this.account.functionCall(
+		return this.account.functionCall(
 			this.contract.contractId, // Target contract
 			"create_market", // Method call
 			{
@@ -58,7 +58,7 @@ class FluxProvider {
 	async claimFDai() {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 
-		await this.account.functionCall(
+		return this.account.functionCall(
 			this.contract.contractId,
 			"claim_fdai",
 			{},
@@ -76,7 +76,7 @@ class FluxProvider {
 		if (spend < 0 )  throw new Error("Invalid spend");
 		if (price_per_share < 0 ) throw new Error("Invalid price per share");
 
-		await this.account.functionCall(
+		return this.account.functionCall(
 			this.contract.contractId,
 			"place_order",
 			{
@@ -98,7 +98,7 @@ class FluxProvider {
 		if (outcome < 0) throw new Error("Invalid outcome id");
 		if (order_id < 0 )  throw new Error("Invalid order id");
 
-		await this.account.functionCall(
+		return this.account.functionCall(
 			this.contract.contractId,
 			"cancel_order",
 			{
@@ -118,7 +118,7 @@ class FluxProvider {
 		if (market_id < 0) throw new Error("Invalid market id");
 		if (winning_outcome < 0) throw new Error("Invalid outcome id");
 
-		await this.account.functionCall(
+		return this.account.functionCall(
 			this.contract.contractId,
 			"resolute",
 			{
@@ -133,18 +133,18 @@ class FluxProvider {
 	}
 
 	async getAllMarkets() {
-		return await this.contract.get_all_markets();
+		return this.contract.get_all_markets();
 	}
 
 	// TODO: make absolete, just here for demo purposes
 	async getFDaiBalance() {
-		return await this.contract.get_fdai_balance({
+		return this.contract.get_fdai_balance({
 			from: this.getAccountId()
 		});
 	}
 
 	async getOpenOrders(market_id, outcome) {
-		return await this.contract.get_open_orders({
+		return this.contract.get_open_orders({
 			market_id: market_id,
 			outcome: outcome,
 			from: this.getAccountId()
@@ -152,7 +152,7 @@ class FluxProvider {
 	}
 
 	async getFilledOrders(market_id, outcome) {
-		return await this.contract.get_filled_orders({
+		return this.contract.get_filled_orders({
 			market_id: market_id,
 			outcome: outcome,
 			from: this.getAccountId()
@@ -160,15 +160,14 @@ class FluxProvider {
 	}
 
 	async getClaimable(market_id) {
-		return await this.contract.get_claimable({
+		return this.contract.get_claimable({
 			market_id: market_id,
 			from: this.getAccountId()
 		});
 	}
 
 	async getMarketPrice(market_id, outcome) {
-		console.log(this.contract);
-		return await this.contract.get_market_price({
+		return this.contract.get_market_price({
 			market_id: market_id,
 			outcome: outcome,
 		});
