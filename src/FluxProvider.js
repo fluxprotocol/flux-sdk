@@ -15,7 +15,8 @@ class FluxProvider {
 
 	// Connects to deployed contract, stores in this.contract
 	async connect(environment, contractId) {
-		this.near = await nearlib.connect(getConfig(environment));
+		console.log(getConfig(environment));
+		this.near = await nearlib.connect({ deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } }, getConfig(environment));
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
 		this.contract = new nearlib.Contract(this.account, contractId, {

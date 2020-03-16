@@ -18,7 +18,8 @@ npm install --save flux-sdk
 import Flux from "flux-sdk";
 
 (async () => {
-	const flux = await new Flux().connect("development", "flux-protocol-staging");
+  const flux = new Flux();
+  await flux.connect("development", "flux_protocol_alpha");
 })();
 ```
 
