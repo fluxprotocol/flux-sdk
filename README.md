@@ -17,9 +17,9 @@ npm install --save flux-sdk
 ```js
 import Flux from "flux-sdk";
 
-(async () => 
+(async () => {
 	const flux = await new Flux().connect("development", "flux-protocol-staging");
-)();
+})();
 ```
 
 ### Methods
@@ -42,6 +42,7 @@ import Flux from "flux-sdk";
 | **getClaimable**(marketId: number)       | Returns how much money the user can claim     |
 | **getMarketPrice**(marketId: number, outcome: number)       | Returns best available price specific market and outcome    |
 | **getAccountId**()       | Returns accountId of signed in user    |
+| **isSignedIn**()       | Returns whether user is signed in    |
 
 ## Running tests
 

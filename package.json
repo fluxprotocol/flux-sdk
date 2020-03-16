@@ -1,10 +1,11 @@
 {
   "name": "flux-sdk",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "Flux protocol SDK",
-  "main": "index.js",
+  "main": "dist/flux.min.js",
   "scripts": {
-    "test": "jest test --runInBand"
+    "test": "jest test --runInBand",
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -26,17 +27,20 @@
   "homepage": "https://github.com/jasperdg/flux-sdk#readme",
   "dependencies": {
     "bn.js": "^5.1.1",
-    "nearlib": "^0.22.0",
-    "node-fetch": "^2.6.0",
-    "whatwg-fetch": "^3.0.0"
+    "nearlib": "^0.22.0"
   },
   "devDependencies": {
+    "node-fetch": "^2.6.0",
+    "whatwg-fetch": "^3.0.0",
     "@babel/core": "^7.8.3",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/preset-env": "^7.8.3",
     "babel-jest": "^25.1.0",
     "babel-plugin-transform-default-import": "^1.0.0",
     "jest": "^25.1.0",
-    "jest-cli": "^25.1.0"
+    "jest-cli": "^25.1.0",
+    "terser-webpack-plugin": "^2.3.5",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.11"
   }
 }

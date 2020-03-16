@@ -1,6 +1,6 @@
-import BN from 'bn.js';
-import nearlib from 'nearlib';
-import getConfig from './../tests/config';
+const BN = require('bn.js');
+const nearlib = require('nearlib');
+const getConfig = require('./../tests/config.js');
 
 const PREPAID_GAS_BASE = new BN("10000000000000000000");
 const ZERO = new BN("0");
