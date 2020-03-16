@@ -189,6 +189,9 @@ class FluxProvider {
 	getAccountId() {
 		return this.walletConnection.getAccountId();
 	}
+	isSignedIn() {
+		return this.walletConnection.isSignedIn();
+	}
 
 }
 

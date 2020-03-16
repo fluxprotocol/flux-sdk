@@ -28,6 +28,8 @@ import Flux from "flux-sdk";
 | ------------- |-------------|
 | **connect**(environment: string, fluxContractAddress: string)      | Connect to the NEAR blockchain and initiate a connection with the Flux contract  |
 | **signIn**(environment: string, fluxContractAddress: string)      | Request a sign-in to the NEAR wallet  |
+| **claimFDai**()      | Claims $100 of fdai (fake dai) for current account, only works if this account hasn't claimed fdai before  |
+| **signOut**(environment: string, fluxContractAddress: string)      | Request a sign-out to the NEAR wallet  |
 | **createBinaryMarket**(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
 | **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
 | **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
