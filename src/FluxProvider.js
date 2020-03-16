@@ -25,6 +25,18 @@ class FluxProvider {
 		});
 	}
 
+
+	signIn() {
+		if (!this.near) throw new Error("No connection to NEAR found")
+		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+		this.walletConnection.requestSignIn();
+	}
+	signOut() {
+		if (!this.near) throw new Error("No connection to NEAR found")
+		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
+		this.walletConnection.signOut();
+	}
+
 	createBinaryMarket(description, extraInfo, endTime) {
 		return this.createMarket(description, extraInfo, 2, [], endTime);
 	}
@@ -174,9 +186,6 @@ class FluxProvider {
 		});
 	}
 
-	signIn() {
-		this.walletConnection.requestSignIn();
-	}
 	getAccountId() {
 		return this.walletConnection.getAccountId();
 	}
