@@ -30,6 +30,8 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 		contract
 	} = await testUtils.setUpTestFluxConnection(workingAccount, contractId);
 
+	await flux.connect("development", "flux_protocol_alpha")
+
 	flux.near = near;
 	flux.walletConnection = walletConnection, 
 	flux.account = workingAccount,

@@ -7,6 +7,8 @@ module.exports = {
   output: {
 		filename: 'flux.min.js',
 		path: path.resolve(__dirname, 'dist'),
+		library: "my-library",
+    libraryTarget: "umd"
 	},
 	node: {
 		fs: 'empty'
