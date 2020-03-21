@@ -19,7 +19,6 @@ class FluxProvider {
 		this.near = await nearlib.connect({...getConfig(contractId), deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } });
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
-		console.log("account: ", this.account.functionCall, "walletAccount:", this.walletConnection)
 		this.contract = new nearlib.Contract(this.account, contractId, {
 			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_market_prices" ,"get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
 			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
