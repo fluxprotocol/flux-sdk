@@ -1,12 +1,13 @@
 const BN = require('bn.js');
 const nearlib = require('nearlib');
 const getConfig = require('./../tests/config.js');
-
-const PREPAID_GAS_BASE = new BN("10000000000000000000");
+const filterUserOrders = require("./helpers").filterUserOrders;
+const PREPAID_GAS = new BN("1000000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
 	constructor() {
+		this.connected = false;
 		this.near = null;
 		this.contract = null;
 		this.walletConnection = null;
@@ -14,43 +15,43 @@ class FluxProvider {
 	}
 
 	// Connects to deployed contract, stores in this.contract
-	async connect(environment, contractId) {
-		console.log(getConfig(environment));
-		this.near = await nearlib.connect({ deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } }, getConfig(environment));
+	async connect(contractId) {
+		this.near = await nearlib.connect({...getConfig(contractId), deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } });
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
+		console.log("account: ", this.account.functionCall, "walletAccount:", this.walletConnection)
 		this.contract = new nearlib.Contract(this.account, contractId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_market_prices" ,"get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
 			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletConnection.getAccountId(),
 		});
+		this.connected = true;
 	}
-
 
 	signIn() {
 		if (!this.near) throw new Error("No connection to NEAR found")
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.walletConnection.requestSignIn();
+		this.walletConnection.requestSignIn(this.contract.contractId, "Flux-protocol");
 	}
+	
 	signOut() {
-		if (!this.near) throw new Error("No connection to NEAR found")
+		if (!this.near) throw new Error("No connection to NEAR found");
 		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
 		this.walletConnection.signOut();
 	}
 
-	createBinaryMarket(description, extraInfo, endTime) {
-		return this.createMarket(description, extraInfo, 2, [], endTime);
+	createBinaryMarket(description, extraInfo, categories, endTime) {
+		return this.createMarket(description, extraInfo, 2, [], categories, endTime);
 	}
 
-	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime) {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
-		return this.createMarket(description, extraInfo, outcomes, outcomeTags, endTime);
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime);
 	}
 
-	async createMarket(description, extraInfo, outcomes, outcomeTags, endTime) {
+	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
-
 		return this.account.functionCall(
 			this.contract.contractId, // Target contract
 			"create_market", // Method call
@@ -59,9 +60,10 @@ class FluxProvider {
 				extra_info: extraInfo,
 				outcomes,
 				outcome_tags: outcomeTags,
+				categories: categories,
 				end_time: endTime
 			},
-			PREPAID_GAS_BASE, // Prepaid gas
+			PREPAID_GAS, // Prepaid gas
 			ZERO // NEAR deposit
 		).catch(err => {
 			throw new Error(err)
@@ -76,7 +78,7 @@ class FluxProvider {
 			this.contract.contractId,
 			"claim_fdai",
 			{},
-			PREPAID_GAS_BASE,
+			PREPAID_GAS,
 			ZERO
 		).catch(err => {
 			throw new Error(err)
@@ -99,7 +101,7 @@ class FluxProvider {
 				spend: spend,
 				price_per_share: pricePerShare,
 			},
-			PREPAID_GAS_BASE,
+			PREPAID_GAS,
 			ZERO
 		).catch(err => {
 			throw new Error(err)
@@ -120,7 +122,7 @@ class FluxProvider {
 				outcome: outcome,
 				order_id: orderId,
 			},
-			PREPAID_GAS_BASE,
+			PREPAID_GAS,
 			ZERO
 		).catch(err => {
 			throw new Error(err)
@@ -139,7 +141,7 @@ class FluxProvider {
 				market_id: marketId,
 				winning_outcome: winningOutcome,
 			},
-			PREPAID_GAS_BASE,
+			PREPAID_GAS,
 			ZERO
 		).catch(err => {
 			throw new Error(err)
@@ -192,6 +194,22 @@ class FluxProvider {
 	}
 	isSignedIn() {
 		return this.walletConnection.isSignedIn();
+	}
+
+	// Helper functions
+
+	formatMarkets(marketsObj) {
+		const formattedMarkets = Object.keys(marketsObj).map(key => {
+			let market = marketsObj[key];
+			market.userOrders = {};
+			market.getMarketPrices = () => this.contract.get_market_prices({market_id: market.id});
+	
+			return market;
+		});
+	
+		formattedMarkets.sort((a, b) => b.liquidity - a.liquidity);
+	
+		return formattedMarkets
 	}
 
 }
