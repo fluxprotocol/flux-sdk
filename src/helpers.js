@@ -43,6 +43,19 @@ const filterUserOrders = (market, accountId) => {
 
 	return {openOrders, filledOrders};
 }
+
+function getConfig(contractId) {
+	return {
+		networkId: 'default',
+		nodeUrl: 'https://rpc.nearprotocol.com',
+		contractName: contractId,
+		walletUrl: 'https://wallet.nearprotocol.com',
+		initialBalance: 100000000
+	};
+
+};
+
 module.exports = {
-	filterUserOrders
+	filterUserOrders,
+	getConfig
 }
