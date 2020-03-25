@@ -1,7 +1,6 @@
 const BN = require('bn.js');
 const nearlib = require('nearlib');
-const getConfig = require('./../tests/config.js');
-const filterUserOrders = require("./helpers").filterUserOrders;
+const helpers = require("./helpers");
 const PREPAID_GAS = new BN("1000000000000000");
 const ZERO = new BN("0");
 
@@ -16,11 +15,11 @@ class FluxProvider {
 
 	// Connects to deployed contract, stores in this.contract
 	async connect(contractId) {
-		this.near = await nearlib.connect({...getConfig(contractId), deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } });
+		this.near = await nearlib.connect({...helpers.getConfig(contractId), deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } });
 		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
 		this.contract = new nearlib.Contract(this.account, contractId, {
-			viewMethods: ["get_all_markets", "get_fdai_balance", "get_market", "get_market_price", "get_market_prices" ,"get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+			viewMethods: ["get_all_markets", "get_markets_by_id" ,"get_fdai_balance", "get_market", "get_market_price", "get_market_prices" ,"get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
 			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletConnection.getAccountId(),
 		});
@@ -65,7 +64,7 @@ class FluxProvider {
 			PREPAID_GAS, // Prepaid gas
 			ZERO // NEAR deposit
 		).catch(err => {
-			throw new Error(err)
+			throw err
 		})
 	}
 
@@ -80,7 +79,7 @@ class FluxProvider {
 			PREPAID_GAS,
 			ZERO
 		).catch(err => {
-			throw new Error(err)
+			throw err
 		})
 	}
 
@@ -103,7 +102,7 @@ class FluxProvider {
 			PREPAID_GAS,
 			ZERO
 		).catch(err => {
-			throw new Error(err)
+			throw err
 		});
 	}
 
@@ -124,7 +123,7 @@ class FluxProvider {
 			PREPAID_GAS,
 			ZERO
 		).catch(err => {
-			throw new Error(err)
+			throw err
 		});
 	}
 
@@ -143,12 +142,32 @@ class FluxProvider {
 			PREPAID_GAS,
 			ZERO
 		).catch(err => {
-			throw new Error(err)
+			throw err
+		})
+	}
+
+	async claimEarnings(marketId) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+
+		return this.account.functionCall(
+			this.contract.contractId,
+			"claim_earnings",
+			{
+				market_id: marketId,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
 		})
 	}
 
 	async getAllMarkets() {
 		return this.contract.get_all_markets();
+	}
+	async getMarketsById(ids) {
+		return this.contract.get_markets_by_id({market_ids: ids});
 	}
 
 	// TODO: make absolete, just here for demo purposes
@@ -196,19 +215,21 @@ class FluxProvider {
 	}
 
 	// Helper functions
-
 	formatMarkets(marketsObj) {
 		const formattedMarkets = Object.keys(marketsObj).map(key => {
 			let market = marketsObj[key];
 			market.userOrders = {};
 			market.getMarketPrices = () => this.contract.get_market_prices({market_id: market.id});
-	
 			return market;
 		});
 	
 		formattedMarkets.sort((a, b) => b.liquidity - a.liquidity);
 	
 		return formattedMarkets
+	}
+
+	filterUserOrders(orders, creator) {
+		return helpers.filterUserOrders(orders, creator);
 	}
 
 }

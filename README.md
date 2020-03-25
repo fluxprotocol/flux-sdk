@@ -19,7 +19,7 @@ import Flux from "flux-sdk";
 
 (async () => {
   const flux = new Flux();
-  await flux.connect("flux_protocol_alpha");
+  await flux.connect("flux-protocol-dev");
 })();
 ```
 
@@ -37,6 +37,7 @@ import Flux from "flux-sdk";
 | **cancelOrder**(marketId: number, outcome: number, orderId: number)       | Cancel an order for a specific market and outcome by orderId    |
 | **resolute**(marketId: number, winningOutcome: number)       | Resolute a specific market `winningOutcome` being the index of the winning outcome.     |
 | **getAllMarkets**()       | Returns all markets     |
+| **getMarketsById**(marketIds: Array<number>)       | Returns markets by ids  |
 | **getFDaiBalance**()       | Returns users principle balance     |
 | **getOpenOrders**(marketId: number, outcome: number)       | Returns user's open orders for a specific market and outcome     |
 | **getFilledOrders**(marketId: number, outcome: number)       | Returns user's filled orders for a specific market and outcome     |
