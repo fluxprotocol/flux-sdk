@@ -1,8 +1,8 @@
 {
   "name": "flux-sdk",
-  "version": "0.0.14",
+  "version": "0.0.21",
   "description": "Flux protocol SDK",
-  "main": "dist/flux.min.js",
+  "main": "src/FluxProvider.js",
   "scripts": {
     "test": "jest test --runInBand",
     "build": "webpack"
@@ -30,11 +30,11 @@
     "nearlib": "^0.22.0"
   },
   "devDependencies": {
-    "node-fetch": "^2.6.0",
-    "whatwg-fetch": "^3.0.0",
     "@babel/core": "^7.8.3",
     "@babel/plugin-proposal-class-properties": "^7.8.3",
     "@babel/preset-env": "^7.8.3",
+    "node-fetch": "^2.6.0",
+    "whatwg-fetch": "^3.0.0",
     "babel-jest": "^25.1.0",
     "babel-plugin-transform-default-import": "^1.0.0",
     "jest": "^25.1.0",

@@ -50,6 +50,7 @@ class FluxProvider {
 	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
+		console.log("doing this", this.account);
 		return this.account.functionCall(
 			this.contract.contractId, // Target contract
 			"create_market", // Method call
