@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jasperdg/flux-sdk.git"
+    "url": "git+https://github.com/fluxprotocol/flux-sdk.git"
   },
   "keywords": [
     "flux",
@@ -22,9 +22,9 @@
   "author": "jasper de gooijer",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jasperdg/flux-sdk/issues"
+    "url": "https://github.com/fluxprotocol/flux-sdk/issues"
   },
-  "homepage": "https://github.com/jasperdg/flux-sdk#readme",
+  "homepage": "https://github.com/fluxprotocol/flux-sdk#readme",
   "dependencies": {
     "bn.js": "^5.1.1",
     "nearlib": "^0.22.0"
