@@ -146,7 +146,7 @@ class FluxProvider {
 		})
 	}
 
-	async claimEarnings(marketId) {
+	async claimEarnings(marketId, accountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 
@@ -155,6 +155,7 @@ class FluxProvider {
 			"claim_earnings",
 			{
 				market_id: marketId,
+				account_id: accountId
 			},
 			PREPAID_GAS,
 			ZERO
