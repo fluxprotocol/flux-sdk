@@ -8,16 +8,20 @@ let nearjs;
 let contractId;
 let testAccount; 
 let workingAccount;
+const INITIAL_BALANCE = new BN("1000000000000000000000000000");
 
 let flux;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
+
+// TODO: Test liquidity per price
+// TODO: Test if market methods aren't exposed (they shouldn't be)
 
 beforeAll(async () => {
 	nearjs = await testUtils.setUpTestConnection();
 	
 	contractId = testUtils.generateUniqueString('test');
-	testAccount = await testUtils.createAccount(await nearjs.account(testUtils.testAccountName), { amount: testUtils.INITIAL_BALANCE.mul(new BN(100)), name:testUtils.generateUniqueString('test'), trials: 5 });
-	workingAccount = await testUtils.createAccount(testAccount, {amount: new BN(100000000), trials: 5, name: testUtils.generateUniqueString('test') });
+	testAccount = await testUtils.createAccount(await nearjs.account(testUtils.testAccountName));
+	workingAccount = await testUtils.createAccount(testAccount, { amount: INITIAL_BALANCE.div(new BN("2")), trials: 5 });
 	await testUtils.deployContract(workingAccount, contractId);
 });
 
@@ -53,8 +57,9 @@ test("Is able to retrieve fdai balance of caller", async () => {
 });
 
 test("Is able to create a market", async () => {
-	await flux.createBinaryMarket("This is a test binary market", "", new Date().getTime() + 10000);
-	await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"], new Date().getTime() + 10000);
+	const endTime = (new Date().getTime() + 20000 );
+	await flux.createBinaryMarket("This is a test binary market", "", [] ,endTime, 1);
+	await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"],[] ,endTime, 1);
 });
 
 test("Is able to fetch all markets", async () => {
@@ -93,6 +98,12 @@ test("Is able to fill a market order", async () => {
 	await flux.placeOrder(1, 1, 200, categoricalPrice);
 });
 
+test("Is able to calculate and get order depth", async () => {
+	const liquidity = await flux.getLiquidity(0, 0, 50);
+	expect(liquidity).toBe(2);
+	const depth = await flux.getDepth(0, 1, 1000, 50);
+	expect(depth).toBe(100);
+});
 
 test("Is able to fetch filled orders", async () => {
 	const filledBinaryOrders = await flux.getFilledOrders(0, 0);
@@ -101,11 +112,14 @@ test("Is able to fetch filled orders", async () => {
 	expect(Object.keys(filledCategoricalOrders)).not.toBe(0);
 });
 
-test("Is able to fetch claimable fdai", async () => {
-	await flux.resolute(0, 1);
-	await flux.resolute(1, 1);
-	const binaryClaimable = await flux.getClaimable(0);
-	const categoricalClaimable = await flux.getClaimable(0);
-	expect(Object.keys(binaryClaimable)).not.toBe(0);
-	expect(Object.keys(categoricalClaimable)).not.toBe(0);
-});
+// test("Is able to fetch claimable fdai", async () => {
+// 	 await new Promise ((resolve) => setTimeout(async() => {
+// 		 await flux.resolute(0, 1);
+// 		 await flux.resolute(1, 1);
+// 		 const binaryClaimable = await flux.getClaimable(0);
+// 		 const categoricalClaimable = await flux.getClaimable(0);
+// 		 expect(Object.keys(binaryClaimable)).not.toBe(0);
+// 		 expect(Object.keys(categoricalClaimable)).not.toBe(0);
+// 		 resolve();
+// 	 }, 20000))
+// });
