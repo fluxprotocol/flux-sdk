@@ -47,9 +47,9 @@ const filterUserOrders = (market, accountId) => {
 function getConfig(contractId) {
 	return {
 		networkId: 'default',
-		nodeUrl: 'https://rpc.nearprotocol.com',
+		nodeUrl: 'https://rpc.testnet.nearprotocol.com',
 		contractName: contractId,
-		walletUrl: 'https://wallet.nearprotocol.com',
+		walletUrl: 'https://wallet.testnet.nearprotocol.com',
 		initialBalance: 100000000
 	};
 

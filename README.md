@@ -31,8 +31,8 @@ import Flux from "flux-sdk";
 | **signIn**(environment: string, fluxContractAddress: string)      | Request a sign-in to the NEAR wallet  |
 | **claimFDai**()      | Claims $100 of fdai (fake dai) for current account, only works if this account hasn't claimed fdai before  |
 | **signOut**(environment: string, fluxContractAddress: string)      | Request a sign-out to the NEAR wallet  |
-| **createBinaryMarket**(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
-| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
+| **createBinaryMarket**(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market. endTime is denomincated in seconds not miliseconds |
+| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market. endTime is denomincated in seconds not miliseconds   |
 | **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
 | **cancelOrder**(marketId: number, outcome: number, orderId: number)       | Cancel an order for a specific market and outcome by orderId    |
 | **resolute**(marketId: number, winningOutcome: number)       | Resolute a specific market `winningOutcome` being the index of the winning outcome.     |
@@ -56,7 +56,7 @@ git clone https://github.com/nearprotocol/nearcore.git
 Run the docker image that has the unit-testable environment
 ```bash
 cd ./nearcore
-python ./scripts/start_unittest.py
+python start_unittest.py --image=nearprotocol/nearcore:master
 ```
 
 When the image is up and running navigate to `/flux-sdk` and run the `npm test`
