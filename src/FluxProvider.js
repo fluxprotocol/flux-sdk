@@ -1,15 +1,5 @@
 const BN = require('bn.js');
-const {
-	connect,
-	WalletConnection,
-	Contract,
-	keyStores,
-	utils
-} = require('near-api-js');
-const {
-	viewMethods,
-	changeMethods
-} = require('./../constants');
+const nearlib = require('nearlib');
 const helpers = require("./helpers");
 const PREPAID_GAS = new BN("1000000000000000");
 const ZERO = new BN("0");
@@ -24,13 +14,13 @@ class FluxProvider {
 	}
 
 	// Connects to deployed contract, stores in this.contract
-	async connect(contractId, keyStore) {
-		this.near = await connect({...helpers.getConfig(contractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
-		this.walletConnection = new WalletConnection(this.near, contractId);
+	async connect(contractId) {
+		this.near = await nearlib.connect({...helpers.getConfig(contractId), deps: { keyStore: new nearlib.keyStores.BrowserLocalStorageKeyStore() } });
+		this.walletConnection = new nearlib.WalletConnection(this.near, contractId);
 		this.account = this.walletConnection.account();
-		this.contract = new Contract(this.account, contractId, {
-			viewMethods,
-			changeMethods,
+		this.contract = new nearlib.Contract(this.account, contractId, {
+			viewMethods: ["get_all_markets", "get_markets_by_id" ,"get_fdai_balance", "get_market", "get_market_price", "get_market_prices" ,"get_owner", "get_claimable", "get_open_orders", "get_filled_orders", "get_fdai_metrics"],
+			changeMethods: ["create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market"],
 			sender: this.walletConnection.getAccountId(),
 		});
 		this.connected = true;
@@ -48,16 +38,16 @@ class FluxProvider {
 		this.walletConnection.signOut();
 	}
 
-	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee) {
-		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee);
+	createBinaryMarket(description, extraInfo, categories, endTime) {
+		return this.createMarket(description, extraInfo, 2, [], categories, endTime);
 	}
 
-	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee) {
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime) {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
-		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee);
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime);
 	}
 
-	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee) {
+	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 		return this.account.functionCall(
@@ -69,10 +59,7 @@ class FluxProvider {
 				outcomes,
 				outcome_tags: outcomeTags,
 				categories: categories,
-				end_time: endTime,
-				fee_percentage: marketCreationFee,
-				cost_percentage: 0,
-				api_source: ""
+				end_time: endTime
 			},
 			PREPAID_GAS, // Prepaid gas
 			ZERO // NEAR deposit
@@ -110,7 +97,7 @@ class FluxProvider {
 				market_id: marketId,
 				outcome: outcome,
 				spend: spend,
-				price: pricePerShare,
+				price_per_share: pricePerShare,
 			},
 			PREPAID_GAS,
 			ZERO
@@ -178,11 +165,6 @@ class FluxProvider {
 	}
 
 	async getAllMarkets() {
-		const provider = this.account.connection.provider;
-		const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
-
-		const state = res.values[0].value;
-		console.log(atob(state));
 		return this.contract.get_all_markets();
 	}
 	async getMarketsById(ids) {
@@ -192,28 +174,15 @@ class FluxProvider {
 	// TODO: make absolete, just here for demo purposes
 	async getFDaiBalance() {
 		return this.contract.get_fdai_balance({
-			account_id: this.getAccountId()
+			from: this.getAccountId()
 		});
-	}
-
-	async getLiquidity(marketId, outcome, price) {
-		return this.contract.get_liquidity({"market_id": marketId, outcome, price})
-	}
-
-	async getDepth(marketId, outcome, price, spend) {
-		return this.contract.get_depth({
-			"market_id": marketId,
-			outcome, 
-			spend, 
-			price
-		})
 	}
 
 	async getOpenOrders(marketId, outcome) {
 		return this.contract.get_open_orders({
 			market_id: marketId,
 			outcome: outcome,
-			account_id: this.getAccountId()
+			from: this.getAccountId()
 		});
 	}
 
@@ -221,14 +190,14 @@ class FluxProvider {
 		return this.contract.get_filled_orders({
 			market_id: marketId,
 			outcome: outcome,
-			account_id: this.getAccountId()
+			from: this.getAccountId()
 		});
 	}
 
 	async getClaimable(marketId) {
 		return this.contract.get_claimable({
 			market_id: marketId,
-			account_id: this.getAccountId()
+			from: this.getAccountId()
 		});
 	}
 

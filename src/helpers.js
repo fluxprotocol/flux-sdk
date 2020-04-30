@@ -44,22 +44,22 @@ const filterUserOrders = (market, accountId) => {
 	return {openOrders, filledOrders};
 }
 
-function getConfig(contractId) {
+function getConfig(
+	contractId, 
+	nodeUrl = 'https://rpc.testnet.nearprotocol.com', 
+	walletUrl = 'https://wallet.testnet.nearprotocol.com'
+) {
 	return {
 		networkId: 'default',
-		nodeUrl: 'https://rpc.testnet.nearprotocol.com',
+		nodeUrl,
 		contractName: contractId,
-		walletUrl: 'https://wallet.testnet.nearprotocol.com',
+		walletUrl,
 		initialBalance: 100000000
 	};
 
 };
-function encode_utf8( s ){
-	return unescape( encodeURIComponent( s ) );
-}
 
 module.exports = {
 	filterUserOrders,
-	getConfig,
-	encode_utf8
+	getConfig
 }
