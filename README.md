@@ -45,6 +45,7 @@ import Flux from "flux-sdk";
 | **getMarketPrice**(marketId: number, outcome: number)       | Returns best available price specific market and outcome    |
 | **getAccountId**()       | Returns accountId of signed in user    |
 | **isSignedIn**()       | Returns whether user is signed in    |
+| **getDepth**(marketId: number, outcome: number, price: number, spend: number)       | Returns available depth up until a certain spend   |
 
 ## Running tests
 
