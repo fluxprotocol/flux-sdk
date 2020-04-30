@@ -112,6 +112,11 @@ test("Is able to fetch filled orders", async () => {
 	expect(Object.keys(filledCategoricalOrders)).not.toBe(0);
 });
 
+test("Is able to fetch all markets", async () => {
+	const allMarkets = await flux.getAllMarkets();
+	expect(Object.keys(allMarkets).length).toBe(2);
+});
+
 // test("Is able to fetch claimable fdai", async () => {
 // 	 await new Promise ((resolve) => setTimeout(async() => {
 // 		 await flux.resolute(0, 1);
