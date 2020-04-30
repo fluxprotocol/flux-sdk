@@ -3,7 +3,8 @@ const {
 	connect,
 	WalletConnection,
 	Contract,
-	keyStores
+	keyStores,
+	utils
 } = require('near-api-js');
 const {
 	viewMethods,
@@ -177,6 +178,11 @@ class FluxProvider {
 	}
 
 	async getAllMarkets() {
+		const provider = this.account.connection.provider;
+		const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
+
+		const state = res.values[0].value;
+		console.log(atob(state));
 		return this.contract.get_all_markets();
 	}
 	async getMarketsById(ids) {

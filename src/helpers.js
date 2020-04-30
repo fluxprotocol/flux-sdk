@@ -54,8 +54,12 @@ function getConfig(contractId) {
 	};
 
 };
+function encode_utf8( s ){
+	return unescape( encodeURIComponent( s ) );
+}
 
 module.exports = {
 	filterUserOrders,
-	getConfig
+	getConfig,
+	encode_utf8
 }
