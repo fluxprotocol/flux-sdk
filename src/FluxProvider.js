@@ -1,7 +1,7 @@
 const BN = require('bn.js');
 const nearlib = require('nearlib');
 const helpers = require("./helpers");
-const PREPAID_GAS = new BN("1000000000000000");
+const PREPAID_GAS = new BN("1000000000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
