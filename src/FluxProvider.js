@@ -250,7 +250,7 @@ class FluxProvider {
 	formatMarkets(marketsObj) {
 		const formattedMarkets = Object.keys(marketsObj).map(key => {
 			let market = marketsObj[key];
-			market.getMarketPrices = () => this.contract.get_market_prices({market_id: market.id});
+			market.getMarketPrices = () => this.contract.get_best_prices({market_id: market.id});
 			market.getOrderbooks = async () => {
 				const updatedMarkets = await this.getMarketsById([market.id]);
 				return updatedMarkets[market.id.toString()].orderbooks;
