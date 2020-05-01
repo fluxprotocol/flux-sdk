@@ -140,17 +140,18 @@ class FluxProvider {
 		});
 	}
 
-	async resolute(marketId, winningOutcome) {
+	async resolute(marketId, winningOutcome, stake) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (winningOutcome < 0) throw new Error("Invalid outcome id");
-
+		console.log(marketId, winningOutcome, stake);
 		return this.account.functionCall(
 			this.contract.contractId,
-			"resolute",
+			"resolute_market",
 			{
 				market_id: marketId,
 				winning_outcome: winningOutcome,
+				stake: stake
 			},
 			PREPAID_GAS,
 			ZERO
