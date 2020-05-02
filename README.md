@@ -19,7 +19,7 @@ import Flux from "flux-sdk";
 
 (async () => {
   const flux = new Flux();
-  await flux.connect("flux-protocol-dev");
+  await flux.connect("fluxprotocol-phase-point-two");
 })();
 ```
 
