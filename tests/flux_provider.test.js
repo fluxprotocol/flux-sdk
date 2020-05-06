@@ -6,8 +6,10 @@ import 'whatwg-fetch';
 
 let nearjs;
 let contractId;
-let testAccount; 
+let testAccount;
 let workingAccount;
+let creatorAccount;
+let workingCreatorAccount;
 const INITIAL_BALANCE = new BN("1000000000000000000000000000");
 
 let flux;
@@ -18,7 +20,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
 
 beforeAll(async () => {
 	nearjs = await testUtils.setUpTestConnection();
-	
+
 	contractId = testUtils.generateUniqueString('test');
 	testAccount = await testUtils.createAccount(await nearjs.account(testUtils.testAccountName));
 	workingAccount = await testUtils.createAccount(testAccount, { amount: INITIAL_BALANCE.div(new BN("2")), trials: 5 });
@@ -27,18 +29,18 @@ beforeAll(async () => {
 
 test("Is able to connect to the NEAR blockchain & initiate Flux smart contract instance", async () => {
 	flux = new FluxProvider();
-	const {        
+	const {
 		near,
 		walletConnection,
 		account,
 		contract
 	} = await testUtils.setUpTestFluxConnection(workingAccount, contractId);
 
-	await flux.connect("development", "flux_protocol_alpha")
+	await flux.connect("development", "flux_protocol_alpha");
 
 	flux.near = near;
-	flux.walletConnection = walletConnection, 
-	flux.account = workingAccount,
+	flux.walletConnection = walletConnection;
+	flux.account = workingAccount;
 	flux.contract = contract;
 });
 
@@ -115,6 +117,41 @@ test("Is able to fetch filled orders", async () => {
 test("Is able to fetch all markets", async () => {
 	const allMarkets = await flux.getAllMarkets();
 	expect(Object.keys(allMarkets).length).toBe(2);
+});
+
+test("Is able to resolute a market", async () => {
+	await flux.resolute(0, 0, 500000000000000001);
+	await flux.resolute(1, 0, 500000000000000001);
+	const market = await flux.getMarketsById([0]);
+	const binaryClaimable = await flux.getClaimable(0);
+	const categoricalClaimable = await flux.getClaimable(1);
+	expect(Object.keys(binaryClaimable)).not.toBe(0);
+	expect(Object.keys(categoricalClaimable)).not.toBe(0);
+});
+
+test("Can retrieve active resolution window", async () => {
+	const window = await flux.getActiveResolutionWindow(0).then(window => { return window });
+});
+
+test("Is able to withdraw dispute on a market", async() => {
+	await flux.dispute(1, 1, 10);
+	await flux.withdrawDisputeStake(1, 1, 1);
+});
+
+test("Is able to dispute a market", async () => {
+	await flux.dispute(0, 1, 1000000000000000005);
+	await flux.dispute(1, 1, 1000000000000000005);
+	});
+
+test("Is able to finalize a market", async () => {
+	await flux.setTest();
+	await flux.finalize(0, 0);
+	await flux.finalize(1, 1);
+});
+
+test("Is able to claim creator fee", async () => {
+	await flux.claimCreatorFee(0);
+	await flux.claimCreatorFee(1);
 });
 
 // test("Is able to fetch claimable fdai", async () => {
