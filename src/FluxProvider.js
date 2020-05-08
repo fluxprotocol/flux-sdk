@@ -41,7 +41,7 @@ class FluxProvider {
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
 		this.walletConnection.requestSignIn(this.contract.contractId, "Flux-protocol");
 	}
-	
+
 	signOut() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
@@ -160,6 +160,66 @@ class FluxProvider {
 		})
 	}
 
+	async dispute(marketId, winningOutcome, stake) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (winningOutcome < 0) throw new Error("Invalid outcome id");
+		console.log(marketId, winningOutcome, stake);
+		return this.account.functionCall(
+			this.contract.contractId,
+			"dispute_market",
+			{
+				market_id: marketId,
+				winning_outcome: winningOutcome,
+				stake: stake
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
+	async withdrawDisputeStake(marketId, disputeRound, outcome) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (disputeRound < 0) throw new Error("Invalid dispute round");
+		if (outcome < 0) throw new Error("Invalid outcome");
+		console.log(marketId, disputeRound, outcome);
+		return this.account.functionCall(
+			this.contract.contractId,
+			"withdraw_dispute_stake",
+			{
+				market_id: marketId,
+				dispute_round: disputeRound,
+				outcome: outcome,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
+	async finalize(marketId, winningOutcome) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (winningOutcome < 0) throw new Error("Invalid outcome id");
+		console.log(marketId, winningOutcome);
+		return this.account.functionCall(
+			this.contract.contractId,
+			"finalize_market",
+			{
+				market_id: marketId,
+				winning_outcome: winningOutcome
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
 	async claimEarnings(marketId, accountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
@@ -170,6 +230,35 @@ class FluxProvider {
 			{
 				market_id: marketId,
 				account_id: accountId
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
+	async claimCreatorFee(marketId) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		return this.account.functionCall(
+			this.contract.contractId,
+			"claim_creator_fee",
+			{
+				market_id: marketId,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
+	async setTest() {
+		return this.account.functionCall(
+			this.contract.contractId,
+			"set_test",
+			{
 			},
 			PREPAID_GAS,
 			ZERO
@@ -204,8 +293,8 @@ class FluxProvider {
 	async getDepth(marketId, outcome, price, spend) {
 		return this.contract.get_depth({
 			"market_id": marketId,
-			outcome, 
-			spend, 
+			outcome,
+			spend,
 			price
 		})
 	}
@@ -240,6 +329,12 @@ class FluxProvider {
 		});
 	}
 
+	async getActiveResolutionWindow(marketId){
+		return this.contract.get_active_resolution_window({
+			market_id: marketId
+		});
+	}
+
 	getAccountId() {
 		return this.walletConnection.getAccountId();
 	}
@@ -255,12 +350,12 @@ class FluxProvider {
 			market.getOrderbooks = async () => {
 				const updatedMarkets = await this.getMarketsById([market.id]);
 				return updatedMarkets[market.id.toString()].orderbooks;
-			} 
+			}
 			return market;
 		});
-	
+
 		formattedMarkets.sort((a, b) => b.liquidity - a.liquidity);
-	
+
 		return formattedMarkets
 	}
 
