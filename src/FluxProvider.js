@@ -184,7 +184,7 @@ class FluxProvider {
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (disputeRound < 0) throw new Error("Invalid dispute round");
 		if (outcome < 0) throw new Error("Invalid outcome");
-		console.log(marketId, disputeRound, outcome);
+		
 		return this.account.functionCall(
 			this.contract.contractId,
 			"withdraw_dispute_stake",
