@@ -35,7 +35,9 @@ import Flux from "flux-sdk";
 | **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number, marketCreationFee: number)      | Create a categorical market. endTime is denomincated in miliseconds. marketCreationFee is denominated in full procentpoints and has an upper bound of 5%   |
 | **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
 | **cancelOrder**(marketId: number, outcome: number, orderId: number)       | Cancel an order for a specific market and outcome by orderId    |
-| **resolute**(marketId: number, winningOutcome: number)       | Resolute a specific market `winningOutcome` being the index of the winning outcome.     |
+| **resolute**(marketId: number, winningOutcome: number | null, stake: number)       | Resolute a specific market. `winningOutcome` being the index of the winning outcome. `stake` is the amount of tokens to stake in a specific outcome. If the user things the market is invalid pass `null` as the winning outcome   |
+| **dispute**(marketId: number, winningOutcome: number | null, stake: number)       | Dispute the previous outcome by staking on a new outcome. `winningOutcome` is the outcome id of the outcome the users believes is true. `stake` is the amount of tokens to stake in a specific outcome. If the user things the market is invalid pass `null` as the winning outcome     |
+| **finalize**(marketId: number, winningOutcome: number | null)       | Finalize a specific market, `winningOutcome` only is to be used by the protocol owner and can be ignored.    |
 | **getAllMarkets**()       | Returns all markets     |
 | **getMarketsById**(marketIds: Array<number>)       | Returns markets by ids  |
 | **getFDaiBalance**()       | Returns users principle balance     |
