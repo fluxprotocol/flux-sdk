@@ -143,7 +143,7 @@ class FluxProvider {
 	async resolute(marketId, winningOutcome, stake) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
-		if (winningOutcome < 0 || winningOutcome === null) throw new Error("Invalid outcome id");
+		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 
 		return this.account.functionCall(
 			this.contract.contractId,
@@ -163,7 +163,7 @@ class FluxProvider {
 	async dispute(marketId, winningOutcome, stake) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
-		if (winningOutcome < 0 || winningOutcome === null) throw new Error("Invalid outcome id");
+		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 		return this.account.functionCall(
 			this.contract.contractId,
 			"dispute_market",
@@ -183,7 +183,7 @@ class FluxProvider {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (disputeRound < 0) throw new Error("Invalid dispute round");
-		if (outcome < 0) throw new Error("Invalid outcome");
+		if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
 		
 		return this.account.functionCall(
 			this.contract.contractId,
@@ -203,7 +203,7 @@ class FluxProvider {
 	async finalize(marketId, winningOutcome) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0 || marketId === null) throw new Error("Invalid market id");
-		if (winningOutcome < 0 || winningOutcome === null) throw new Error("Invalid outcome id");
+		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 
 		return this.account.functionCall(
 			this.contract.contractId,
