@@ -31,23 +31,23 @@ import Flux from "flux-sdk";
 | **signIn**(environment: string, fluxContractAddress: string)      | Request a sign-in to the NEAR wallet  |
 | **claimFDai**()      | Claims $100 of fdai (fake dai) for current account, only works if this account hasn't claimed fdai before  |
 | **signOut**(environment: string, fluxContractAddress: string)      | Request a sign-out to the NEAR wallet  |
-| **createBinaryMarket**(description: string, extraInfo: string, endTime: number, marketCreationFee: number)      | Create a binary (Yes/No) market. endTime is denomincated in miliseconds. marketCreationFee is denominated in full procentpoints and has an upper bound of 5% |
-| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number, marketCreationFee: number)      | Create a categorical market. endTime is denomincated in miliseconds. marketCreationFee is denominated in full procentpoints and has an upper bound of 5%   |
+| **createBinaryMarket**(description: string, extraInfo: string, endTime: number, marketCreationFee: number) : Number      | Create a binary (Yes/No) market. endTime is denomincated in miliseconds. marketCreationFee is denominated in full procentpoints and has an upper bound of 5%. Returns new market id  |
+| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number, marketCreationFee: number) : Number      | Create a categorical market. endTime is denomincated in miliseconds. marketCreationFee is denominated in full procentpoints and has an upper bound of 5%. Returns new market id   |
 | **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
 | **cancelOrder**(marketId: number, outcome: number, orderId: number)       | Cancel an order for a specific market and outcome by orderId    |
 | **resolute**(marketId: number, winningOutcome: number | null, stake: number)       | Resolute a specific market. `winningOutcome` being the index of the winning outcome. `stake` is the amount of tokens to stake in a specific outcome. If the user things the market is invalid pass `null` as the winning outcome   |
 | **dispute**(marketId: number, winningOutcome: number | null, stake: number)       | Dispute the previous outcome by staking on a new outcome. `winningOutcome` is the outcome id of the outcome the users believes is true. `stake` is the amount of tokens to stake in a specific outcome. If the user things the market is invalid pass `null` as the winning outcome     |
 | **finalize**(marketId: number, winningOutcome: number | null)       | Finalize a specific market, `winningOutcome` only is to be used by the protocol owner and can be ignored.    |
-| **getAllMarkets**()       | Returns all markets     |
-| **getMarketsById**(marketIds: Array<number>)       | Returns markets by ids  |
-| **getFDaiBalance**()       | Returns users principle balance     |
-| **getOpenOrders**(marketId: number, outcome: number)       | Returns user's open orders for a specific market and outcome     |
-| **getFilledOrders**(marketId: number, outcome: number)       | Returns user's filled orders for a specific market and outcome     |
-| **getClaimable**(marketId: number)       | Returns how much money the user can claim     |
-| **getMarketPrice**(marketId: number, outcome: number)       | Returns best available price specific market and outcome    |
-| **getAccountId**()       | Returns accountId of signed in user    |
-| **isSignedIn**()       | Returns whether user is signed in    |
-| **getDepth**(marketId: number, outcome: number, price: number, spend: number)       | Returns available depth up until a certain spend   |
+| **getAllMarkets**() : Markets      | Returns all markets     |
+| **getMarketsById**(marketIds: Array<number>) : Markets       | Returns markets by ids  |
+| **getFDaiBalance**() : Number      | Returns users principle balance     |
+| **getOpenOrders**(marketId: number, outcome: number) : Orders       | Returns user's open orders for a specific market and outcome     |
+| **getFilledOrders**(marketId: number, outcome: number) : Orders      | Returns user's filled orders for a specific market and outcome     |
+| **getClaimable**(marketId: number) : Number      | Returns how much money the user can claim     |
+| **getMarketPrice**(marketId: number, outcome: number) : Number      | Returns best available price specific market and outcome    |
+| **getAccountId**() : String       | Returns accountId of signed in user    |
+| **isSignedIn**() : Bool      | Returns whether user is signed in    |
+| **getDepth**(marketId: number, outcome: number, price: number, spend: number) : Number      | Returns available depth up until a certain spend   |
 
 ## Running tests
 
