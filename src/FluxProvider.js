@@ -300,23 +300,21 @@ class FluxProvider {
 	async getOpenOrders(marketId, outcome) {
 		return this.contract.get_open_orders({
 			market_id: marketId,
-			outcome: outcome,
-			account_id: this.getAccountId()
+			outcome: outcome
 		});
 	}
 
 	async getFilledOrders(marketId, outcome) {
 		return this.contract.get_filled_orders({
 			market_id: marketId,
-			outcome: outcome,
-			account_id: this.getAccountId()
+			outcome: outcome
 		});
 	}
 
-	async getClaimable(marketId) {
+	async getClaimable(marketId, accountId = this.getAccountId()) {
 		return this.contract.get_claimable({
 			market_id: marketId,
-			account_id: this.getAccountId()
+			account_id: accountId
 		});
 	}
 
