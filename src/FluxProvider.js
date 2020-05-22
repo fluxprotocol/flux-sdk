@@ -24,7 +24,7 @@ class FluxProvider {
 	}
 
 	// Connects to deployed contract, stores in this.contract
-	async connect(contractId, keyStore) {
+	async connect(contractId, keyStore, accountId) {
     this.near = await connect({...helpers.getConfig(contractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
     if (typeof window !== 'undefined') {
         this.walletConnection = new WalletConnection(this.near, contractId);
