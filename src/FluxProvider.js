@@ -57,17 +57,35 @@ class FluxProvider {
 		this.walletConnection.signOut();
 	}
 
-	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee) {
-		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee);
+	// TODO - done
+	async addToCreatorsFunds(amount) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (amount < 0) throw new Error("Amount id must be >= 0");
+		return this.account.functionCall(
+			this.contract.contractId,
+			"add_to_creators_funds",
+			{
+				amount,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
 	}
 
-	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee) {
+	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
+		return this.createMarket(description, extraInfo, "2", [], categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
+	}
+
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
-		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee);
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
 	}
 
-	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee) {
+	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
+		if (affiliateFeePercentage >= 100 || affiliateFeePercentage < 0) throw new Error("Invalid affiliate fee percentage");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 		return this.account.functionCall(
 			this.contract.contractId, // Target contract
@@ -79,8 +97,8 @@ class FluxProvider {
 				outcome_tags: outcomeTags,
 				categories: categories,
 				end_time: endTime,
-				fee_percentage: marketCreationFee,
-				cost_percentage: 0,
+				creator_fee_percentage: marketCreationFee,
+				affiliate_fee_percentage: affiliateFeePercentage,
 				api_source: ""
 			},
 			PREPAID_GAS, // Prepaid gas
@@ -98,6 +116,23 @@ class FluxProvider {
 			this.contract.contractId,
 			"claim_fdai",
 			{},
+			PREPAID_GAS * 3,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
+	// TODO - done
+	async deleteMarket(marketId) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Market id must be >= 0");
+		return this.account.functionCall(
+			this.contract.contractId,
+			"delete_market",
+			{
+				market_id: marketId,
+			},
 			PREPAID_GAS,
 			ZERO
 		).catch(err => {
@@ -105,7 +140,7 @@ class FluxProvider {
 		})
 	}
 
-	async placeOrder(marketId, outcome, spend, pricePerShare) {
+	async placeOrder(marketId, outcome, spend, pricePerShare, affiliateAccountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
@@ -120,8 +155,9 @@ class FluxProvider {
 				outcome: outcome,
 				spend: spend,
 				price: pricePerShare,
+				affiliate_account_id: affiliateAccountId,
 			},
-			PREPAID_GAS,
+			PREPAID_GAS * 3,
 			ZERO
 		).catch(err => {
 			throw err
@@ -147,6 +183,27 @@ class FluxProvider {
 		).catch(err => {
 			throw err
 		});
+	}
+
+	// TODO - done
+	async dynamicMarketSell(marketId, outcome, shares) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Market id must be >= 0");
+		if (outcome < 0) throw new Error("Outcome must be >= 0");
+		if (shares < 0) throw new Error("Shares must be >= 0");
+		return this.account.functionCall(
+			this.contract.contractId,
+			"dynamic_market_sell",
+			{
+				market_id: marketId,
+				outcome,
+				shares,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
 	}
 
 	async resolute(marketId, winningOutcome, stake) {
@@ -193,7 +250,7 @@ class FluxProvider {
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (disputeRound < 0) throw new Error("Invalid dispute round");
 		if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
-		
+
 		return this.account.functionCall(
 			this.contract.contractId,
 			"withdraw_dispute_stake",
@@ -246,6 +303,22 @@ class FluxProvider {
 		})
 	}
 
+	// TODO - done
+	async claimAffiliateEarnings(accountId) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		return this.account.functionCall(
+			this.contract.contractId,
+			"claim_affiliate_earnings",
+			{
+				account_id: accountId,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
+
 	async claimCreatorFee(marketId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
@@ -279,11 +352,34 @@ class FluxProvider {
 		// const provider = this.account.connection.provider;
 		// const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
 		// const state = res.values[0].value;
-		
+
 		return this.contract.get_all_markets();
 	}
+
+	// TODO - modified
 	async getMarketsById(ids) {
-		return this.contract.get_markets_by_id({market_ids: ids});
+		return this.contract.get_markets_by_id({market_ids: ids})
+	}
+
+	// TODO - Modified
+	async getMarket(id) {
+		return this.contract.get_market({id});
+	}
+
+	// TODO - done
+	async getMarketVolume(marketId) {
+		return this.contract.get_market_volume({
+			market_id: marketId,
+		});
+	}
+
+	// TODO - done
+	async getMarketSellDepth(marketId, outcome, shares) {
+		return this.contract.get_market_sell_depth({
+			market_id: marketId,
+			outcome,
+			shares
+		});
 	}
 
 	// TODO: make absolete, just here for demo purposes
@@ -293,28 +389,50 @@ class FluxProvider {
 		});
 	}
 
+	// TODO - done
+	async getFDaiMetrics() {
+		return this.contract.get_fdai_metrics();
+	}
+
 	async getLiquidity(marketId, outcome, price) {
 		return this.contract.get_liquidity({"market_id": marketId, outcome, price})
 	}
 
+	// TODO - done
+	async getOutcomeShareBalance(marketId, outcome) {
+		return this.contract.get_outcome_share_balance({
+			account_id: this.getAccountId(),
+			market_id: marketId,
+			outcome
+		});
+	}
+
+	// TODO - modified
 	async getDepth(marketId, outcome, price, spend) {
 		return this.contract.get_depth({
-			"market_id": marketId,
+			market_id: marketId,
 			outcome,
 			spend,
 			price
 		})
 	}
 
-	async getOpenOrders(marketId, outcome) {
-		return this.contract.get_open_orders({
+	// TODO - done
+	async getOwner() {
+		return this.contract.get_owner();
+	}
+
+	// TODO - modified
+	async getOpenOrdersLen(marketId, outcome) {
+		return this.contract.get_open_orders_len({
 			market_id: marketId,
 			outcome: outcome
 		});
 	}
 
-	async getFilledOrders(marketId, outcome) {
-		return this.contract.get_filled_orders({
+	// TODO - Modified
+	async getFilledOrdersLen(marketId, outcome) {
+		return this.contract.get_filled_orders_len({
 			market_id: marketId,
 			outcome: outcome
 		});
@@ -355,7 +473,7 @@ class FluxProvider {
 			market.getOrderbooks = async () => {
 				const updatedMarkets = await this.getMarketsById([market.id]);
 				return updatedMarkets[market.id.toString()].orderbooks;
-			}
+			};
 			return market;
 		});
 
