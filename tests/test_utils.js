@@ -35,8 +35,9 @@ async function setUpTestFluxConnection(workingAccount, protocolContractId, token
 	let keyPair = KeyPair.fromRandom('ed25519');
 
     const near = await connect(config);
-    const walletConnection = new WalletConnection(near, protocolContractId);
-    walletConnection._authData = {
+    // TODO: NEED another connection object
+    const protocolWalletConnection = new WalletConnection(near, protocolContractId);
+    protocolWalletConnection._authData = {
         allKeys: [ 'no_such_access_key', keyPair.publicKey.toString() ],
         accountId: workingAccount.accountId
     };
@@ -44,18 +45,25 @@ async function setUpTestFluxConnection(workingAccount, protocolContractId, token
     const protocolContract = new Contract(workingAccount, protocolContractId, {
         protocolViewMethods,
         protocolChangeMethods,
-        sender: walletConnection.getAccountId(),
+        sender: protocolWalletConnection.getAccountId(),
     });
+
+    const tokenWalletConnection = new WalletConnection(near, tokenContractId);
+    tokenWalletConnection._authData = {
+        allKeys: [ 'no_such_access_key', keyPair.publicKey.toString() ],
+        accountId: workingAccount.accountId
+    };
 
     const tokenContract = new Contract(workingAccount, tokenContractId, {
         tokenViewMethods,
         tokenChangeMethods,
-        sender: walletConnection.getAccountId(),
+        sender: tokenWalletConnection.getAccountId(),
     });
 
     return {
         near,
-        walletConnection,
+        protocolWalletConnection,
+        tokenWalletConnection,
         protocolContract,
         tokenContract
     }
