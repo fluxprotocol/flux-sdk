@@ -35,7 +35,7 @@ async function setUpTestFluxConnection(workingAccount, protocolContractId, token
 	let keyPair = KeyPair.fromRandom('ed25519');
 
     const near = await connect(config);
-    const walletConnection = new WalletConnection(near, contractId);
+    const walletConnection = new WalletConnection(near, protocolContractId);
     walletConnection._authData = {
         allKeys: [ 'no_such_access_key', keyPair.publicKey.toString() ],
         accountId: workingAccount.accountId
