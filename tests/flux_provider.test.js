@@ -26,11 +26,11 @@ beforeAll(async () => {
 
 	// Contract ID = random string
 	protocolContractId = testUtils.generateUniqueString('test');
-	tokenContractId = testUtils.generateUniqueString('testFungible');
+	tokenContractId = testUtils.generateUniqueString('test');
 	testAccount = await testUtils.createAccount(await nearjs.account(testUtils.testAccountName));
 	workingAccount = await testUtils.createAccount(testAccount, { amount: INITIAL_BALANCE.div(new BN("2")), trials: 5 });
-	await testUtils.deployContract(workingAccount, protocolContractId);
-	await testUtils.deployContract(workingAccount, tokenContractId)
+	await testUtils.deployContract(workingAccount, protocolContractId, "protocol");
+	await testUtils.deployContract(workingAccount, tokenContractId, "fungible");
 });
 
 test("Is able to connect to the NEAR blockchain & initiate Flux smart contract instance", async () => {
@@ -67,12 +67,12 @@ test("Is able to retrieve the accountId ", () => {
 
 test("Is able to claim fdai", async () => {
 	await flux.claimFDai();
-	const balance = await fluxFungible.getBalance(this.getAccountId());
+	const balance = await fluxFungible.getBalance(workingAccount.accountId);
 	expect(balance).toBeGreaterThan(0);
 });
 
 test('Is able to set an allowance', async () => {
-	await fluxFungible.setAllowance(this.getAccountId(), '100000000');
+	await fluxFungible.setAllowance(workingAccount.accountId, '100000000');
 });
 
 test("Is able to create a market", async () => {
