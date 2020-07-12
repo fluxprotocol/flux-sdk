@@ -1,6 +1,5 @@
 `use strict`
 const FluxProvider = require('../src/FluxProvider');
-const FluxFungible = require('../src/FluxFungible');
 const testUtils = require('./test_utils');
 const BN = require("bn.js");
 import 'whatwg-fetch';
@@ -15,7 +14,6 @@ let workingCreatorAccount;
 const INITIAL_BALANCE = new BN("1000000000000000000000000000");
 
 let flux;
-let fluxFungible;
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
 
 // TODO: Test liquidity per price
@@ -26,7 +24,7 @@ beforeAll(async () => {
 
 	// Contract ID = random string
 	protocolContractId = testUtils.generateUniqueString('test');
-	tokenContractId = testUtils.generateUniqueString('test');
+	tokenContractId = testUtils.generateUniqueString('tokn');
 	testAccount = await testUtils.createAccount(await nearjs.account(testUtils.testAccountName));
 	workingAccount = await testUtils.createAccount(testAccount, { amount: INITIAL_BALANCE.div(new BN("2")), trials: 5 });
 	await testUtils.deployContract(workingAccount, protocolContractId, "protocol");
@@ -35,10 +33,10 @@ beforeAll(async () => {
 
 test("Is able to connect to the NEAR blockchain & initiate Flux smart contract instance", async () => {
 	flux = new FluxProvider();
-	fluxFungible = new FluxFungible();
 	const {
 		near,
-		walletConnection,
+		protocolWalletConnection,
+		tokenWalletConnection,
 		protocolContract,
 		tokenContract
 	} = await testUtils.setUpTestFluxConnection(workingAccount, protocolContractId, tokenContractId);
@@ -46,17 +44,11 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 	await flux.connect("development", "flux_protocol_alpha");
 
 	flux.near = near;
-	flux.walletConnection = walletConnection;
 	flux.account = workingAccount;
-	flux.contract = protocolContract;
-
-	await fluxFungible.connect('development', 'flux_protocol_alpha');
-	// At this point we have a connection to the development network using the same keystore as we are using for the protocol
-	fluxFungible.near = near;
-	fluxFungible.walletConnection = walletConnection;
-	fluxFungible.account = workingAccount;
-	fluxFungible.contract = tokenContract;
-
+	flux.protocolWalletConnection = protocolWalletConnection;
+	flux.protocolContract = protocolContract;
+	flux.tokenWalletConnection = tokenWalletConnection;
+	flux.tokenContract = tokenContract;
 
 });
 
@@ -67,12 +59,12 @@ test("Is able to retrieve the accountId ", () => {
 
 test("Is able to claim fdai", async () => {
 	await flux.claimFDai();
-	const balance = await fluxFungible.getBalance(workingAccount.accountId);
+	const balance = await flux.getBalance(workingAccount.accountId);
 	expect(balance).toBeGreaterThan(0);
 });
 
 test('Is able to set an allowance', async () => {
-	await fluxFungible.setAllowance(workingAccount.accountId, '100000000');
+	await flux.setAllowance(workingAccount.accountId, '100000000');
 });
 
 test("Is able to create a market", async () => {
