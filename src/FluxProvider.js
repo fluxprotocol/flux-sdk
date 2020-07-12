@@ -7,8 +7,8 @@ const {
 	utils
 } = require('near-api-js');
 const {
-	viewMethods,
-	changeMethods
+	protocolViewMethods,
+	protocolChangeMethods
 } = require('./../constants');
 const helpers = require("./helpers");
 const PREPAID_GAS = new BN("1000000000000000");
@@ -25,24 +25,24 @@ class FluxProvider {
 	}
 
 	async connect(contractId, keyStore, accountId) {
-    this.near = await connect({...helpers.getConfig(contractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
-    if (typeof window !== 'undefined') {
-        this.walletConnection = new WalletConnection(this.near, contractId);
-        this.account = this.walletConnection.account();
-        this.contract = new Contract(this.account, contractId, {
-            viewMethods,
-            changeMethods,
-            sender: this.walletConnection.getAccountId(),
-        });
-    } else {
-        this.account = await this.near.account(accountId);
-        this.contract = new Contract(this.account, contractId, {
-            viewMethods,
-            changeMethods,
-            sender: accountId,
-        });
-    }
-    this.connected = true;
+		this.near = await connect({...helpers.getConfig(contractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
+		if (typeof window !== 'undefined') {
+			this.walletConnection = new WalletConnection(this.near, contractId);
+			this.account = this.walletConnection.account();
+			this.contract = new Contract(this.account, contractId, {
+				protocolViewMethods,
+				protocolChangeMethods,
+				sender: this.walletConnection.getAccountId(),
+			});
+		} else {
+			this.account = await this.near.account(accountId);
+			this.contract = new Contract(this.account, contractId, {
+				protocolViewMethods,
+				protocolChangeMethods,
+				sender: accountId,
+			});
+		}
+		this.connected = true;
 	}
 
 	signIn() {
@@ -57,7 +57,6 @@ class FluxProvider {
 		this.walletConnection.signOut();
 	}
 
-	// TODO - done
 	async addToCreatorsFunds(amount) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (amount < 0) throw new Error("Amount id must be >= 0");
@@ -123,7 +122,6 @@ class FluxProvider {
 		})
 	}
 
-	// TODO - done
 	async deleteMarket(marketId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
@@ -185,7 +183,6 @@ class FluxProvider {
 		});
 	}
 
-	// TODO - done
 	async dynamicMarketSell(marketId, outcome, shares) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
@@ -303,7 +300,6 @@ class FluxProvider {
 		})
 	}
 
-	// TODO - done
 	async claimAffiliateEarnings(accountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		return this.account.functionCall(
@@ -356,24 +352,20 @@ class FluxProvider {
 		return this.contract.get_all_markets();
 	}
 
-	// TODO - modified
 	async getMarketsById(ids) {
 		return this.contract.get_markets_by_id({market_ids: ids})
 	}
 
-	// TODO - Modified
 	async getMarket(id) {
 		return this.contract.get_market({id});
 	}
 
-	// TODO - done
 	async getMarketVolume(marketId) {
 		return this.contract.get_market_volume({
 			market_id: marketId,
 		});
 	}
 
-	// TODO - done
 	async getMarketSellDepth(marketId, outcome, shares) {
 		return this.contract.get_market_sell_depth({
 			market_id: marketId,
@@ -382,14 +374,12 @@ class FluxProvider {
 		});
 	}
 
-	// TODO: make absolete, just here for demo purposes
 	async getFDaiBalance() {
 		return this.contract.get_fdai_balance({
 			account_id: this.getAccountId()
 		});
 	}
 
-	// TODO - done
 	async getFDaiMetrics() {
 		return this.contract.get_fdai_metrics();
 	}
@@ -398,7 +388,6 @@ class FluxProvider {
 		return this.contract.get_liquidity({"market_id": marketId, outcome, price})
 	}
 
-	// TODO - done
 	async getOutcomeShareBalance(marketId, outcome) {
 		return this.contract.get_outcome_share_balance({
 			account_id: this.getAccountId(),
@@ -407,7 +396,6 @@ class FluxProvider {
 		});
 	}
 
-	// TODO - modified
 	async getDepth(marketId, outcome, price, spend) {
 		return this.contract.get_depth({
 			market_id: marketId,
@@ -417,12 +405,10 @@ class FluxProvider {
 		})
 	}
 
-	// TODO - done
 	async getOwner() {
 		return this.contract.get_owner();
 	}
 
-	// TODO - modified
 	async getOpenOrdersLen(marketId, outcome) {
 		return this.contract.get_open_orders_len({
 			market_id: marketId,
@@ -430,7 +416,6 @@ class FluxProvider {
 		});
 	}
 
-	// TODO - Modified
 	async getFilledOrdersLen(marketId, outcome) {
 		return this.contract.get_filled_orders_len({
 			market_id: marketId,

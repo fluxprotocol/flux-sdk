@@ -10,8 +10,10 @@ const {
     Account
 } = require('near-api-js');
 const {
-	viewMethods,
-	changeMethods
+	protocolViewMethods,
+	protocolChangeMethods,
+    tokenViewMethods,
+    tokenChangeMethods
 } = require('./../constants');
 
 const networkId = 'unittest';
@@ -19,17 +21,19 @@ const testAccountName = 'test.near';
 const keyStore = new keyStores.BrowserLocalStorageKeyStore();
 
 const INITIAL_BALANCE = new BN("1000000000000000000000000000");
-const HELLO_WASM_PATH = './tests/flux_protocol.wasm';
+const FLUX_WASM_PATH = './tests/flux_protocol.wasm';
+const FLUX_FUNGIBLE_WASM_PATH = './tests/fungible_token.wasm';
 
-async function setUpTestFluxConnection(workingAccount, contractId) {
-    await keyStore.setKey(networkId, contractId, utils.KeyPair.fromString('ed25519:2wyRcSwSuHtRVmkMCGjPwnzZmQLeXLzLLyED1NDMt4BjnKgQL6tF85yBx6Jr26D2dUNeC716RBoTxntVHsegogYw'));
+async function setUpTestFluxConnection(workingAccount, protocolContractId, tokenContractId) {
+    await keyStore.setKey(networkId, protocolContractId, utils.KeyPair.fromString('ed25519:2wyRcSwSuHtRVmkMCGjPwnzZmQLeXLzLLyED1NDMt4BjnKgQL6tF85yBx6Jr26D2dUNeC716RBoTxntVHsegogYw'));
+    await keyStore.setKey(networkId, tokenContractId, utils.KeyPair.fromString('ed25519:2wyRcSwSuHtRVmkMCGjPwnzZmQLeXLzLLyED1NDMt4BjnKgQL6tF85yBx6Jr26D2dUNeC716RBoTxntVHsegogYw'));
 	const config = Object.assign(require('./config')(process.env.NODE_ENV || 'test'), {
 		networkId: networkId,
 		deps: { keyStore },
     });
 
 	let keyPair = KeyPair.fromRandom('ed25519');
-    
+
     const near = await connect(config);
     const walletConnection = new WalletConnection(near, contractId);
     walletConnection._authData = {
@@ -37,16 +41,23 @@ async function setUpTestFluxConnection(workingAccount, contractId) {
         accountId: workingAccount.accountId
     };
 
-    const contract = new Contract(workingAccount, contractId, {
-        viewMethods,
-        changeMethods,
+    const protocolContract = new Contract(workingAccount, protocolContractId, {
+        protocolViewMethods,
+        protocolChangeMethods,
+        sender: walletConnection.getAccountId(),
+    });
+
+    const tokenContract = new Contract(workingAccount, tokenContractId, {
+        tokenViewMethods,
+        tokenChangeMethods,
         sender: walletConnection.getAccountId(),
     });
 
     return {
         near,
         walletConnection,
-        contract
+        protocolContract,
+        tokenContract
     }
 }
 
@@ -73,9 +84,14 @@ async function createAccount(masterAccount, options = { amount: INITIAL_BALANCE,
     return new Account(masterAccount.connection, newAccountName);
 }
 
-async function deployContract(workingAccount, contractId, options = { amount: INITIAL_BALANCE.div(new BN(10)) }) {
+async function deployContract(workingAccount, contractId, contract_type, options = { amount: INITIAL_BALANCE.div(new BN(10)) }) {
     const newPublicKey = await workingAccount.connection.signer.createKey(contractId, networkId);
-    const data = [...(await fs.readFile(HELLO_WASM_PATH))];
+    let data;
+    if (contract_type === "protocol") {
+        data = [...(await fs.readFile(FLUX_WASM_PATH))];
+    } else if (contract_type === "fungible") {
+        data = [...(await fs.readFile(FLUX_FUNGIBLE_WASM_PATH))];
+    }
     await workingAccount.createAndDeployContract(contractId, newPublicKey, data, options.amount);
 }
 
