@@ -57,9 +57,9 @@ function getConfig(networkName, contractId, walletUrl, nodeUrl) {
 				initialBalance: 100000000
 			};
 			break;
-		case "localalnet":
+		case "custom":
 			network = {
-				networkId: 'localnet',
+				networkId: 'custom',
 				nodeUrl,
 				contractName: contractId,
 				walletUrl,
