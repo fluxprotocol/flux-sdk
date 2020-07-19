@@ -11,21 +11,38 @@ const {
 	changeMethods
 } = require('./../constants');
 const helpers = require("./helpers");
+const fetch = require("node-fetch");
 const PREPAID_GAS = new BN("1000000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
-	constructor() {
+	constructor(network = "testnet", indexNodeUrl = "http://localhost:3001", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
 		this.connected = false;
+		this.indexNodeUrl = indexNodeUrl;
+		this.network = network;
 		this.near = null;
 		this.contract = null;
 		this.walletConnection = null;
 		this.account = null;
-		this.keyStores = keyStores;
+		this.keyStore = keyStore;
 	}
 
-	async connect(contractId, keyStore, accountId) {
-    this.near = await connect({...helpers.getConfig(contractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
+	async connect(
+		contractId,
+		accountId,
+		customNodeUrl, 
+		customWalletUrl
+	) {
+
+    this.near = await connect(
+			{
+				...helpers.getConfig(this.network, contractId), 
+				deps: { keyStore: this.keyStore },
+				customNodeUrl,
+				customWalletUrl
+			}
+		);
+
     if (typeof window !== 'undefined') {
         this.walletConnection = new WalletConnection(this.near, contractId);
         this.account = this.walletConnection.account();
@@ -348,116 +365,6 @@ class FluxProvider {
 		})
 	}
 
-	async getAllMarkets() {
-		// const provider = this.account.connection.provider;
-		// const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
-		// const state = res.values[0].value;
-
-		return this.contract.get_all_markets();
-	}
-
-	// TODO - modified
-	async getMarketsById(ids) {
-		return this.contract.get_markets_by_id({market_ids: ids})
-	}
-
-	// TODO - Modified
-	async getMarket(id) {
-		return this.contract.get_market({id});
-	}
-
-	// TODO - done
-	async getMarketVolume(marketId) {
-		return this.contract.get_market_volume({
-			market_id: marketId,
-		});
-	}
-
-	// TODO - done
-	async getMarketSellDepth(marketId, outcome, shares) {
-		return this.contract.get_market_sell_depth({
-			market_id: marketId,
-			outcome,
-			shares
-		});
-	}
-
-	// TODO: make absolete, just here for demo purposes
-	async getFDaiBalance() {
-		return this.contract.get_fdai_balance({
-			account_id: this.getAccountId()
-		});
-	}
-
-	// TODO - done
-	async getFDaiMetrics() {
-		return this.contract.get_fdai_metrics();
-	}
-
-	async getLiquidity(marketId, outcome, price) {
-		return this.contract.get_liquidity({"market_id": marketId, outcome, price})
-	}
-
-	// TODO - done
-	async getOutcomeShareBalance(marketId, outcome) {
-		return this.contract.get_outcome_share_balance({
-			account_id: this.getAccountId(),
-			market_id: marketId,
-			outcome
-		});
-	}
-
-	// TODO - modified
-	async getDepth(marketId, outcome, price, spend) {
-		return this.contract.get_depth({
-			market_id: marketId,
-			outcome,
-			spend,
-			price
-		})
-	}
-
-	// TODO - done
-	async getOwner() {
-		return this.contract.get_owner();
-	}
-
-	// TODO - modified
-	async getOpenOrdersLen(marketId, outcome) {
-		return this.contract.get_open_orders_len({
-			market_id: marketId,
-			outcome: outcome
-		});
-	}
-
-	// TODO - Modified
-	async getFilledOrdersLen(marketId, outcome) {
-		return this.contract.get_filled_orders_len({
-			market_id: marketId,
-			outcome: outcome
-		});
-	}
-
-	async getClaimable(marketId, accountId = this.getAccountId()) {
-		return this.contract.get_claimable({
-			market_id: marketId,
-			account_id: accountId
-		});
-	}
-
-	async getMarketPrice(marketId, outcome) {
-		return this.contract.get_market_price({
-			market_id: marketId,
-			outcome: outcome,
-		});
-	}
-
-	async getActiveResolutionWindow(marketId){
-		return this.contract.get_active_resolution_window({
-			market_id: marketId
-		});
-	}
-
 	getAccountId() {
 		return this.walletConnection.getAccountId();
 	}
@@ -465,27 +372,75 @@ class FluxProvider {
 		return this.walletConnection.isSignedIn();
 	}
 
-	// Helper functions
-	formatMarkets(marketsObj) {
-		const formattedMarkets = Object.keys(marketsObj).map(key => {
-			let market = marketsObj[key];
-			market.getMarketPrices = () => this.contract.get_best_prices({market_id: market.id});
-			market.getOrderbooks = async () => {
-				const updatedMarkets = await this.getMarketsById([market.id]);
-				return updatedMarkets[market.id.toString()].orderbooks;
-			};
-			return market;
+	async getMarkets(filter, limit, offset) {
+		return await this.fetchState("markets/get", {filter, limit, offset});
+	}
+
+	async getLastFilledPrices(filter, limit, offset) {
+		return await this.fetchState("markets/last_filled_prices", {filter, limit, offset});
+	}
+
+	async getLastFilledPrices(filter, limit, offset) {
+		return await this.fetchState("markets/last_filled_prices", {filter, limit, offset});
+	}
+	
+	async getMarket(marketId) {
+		return await this.fetchState("market/get", {marketId});
+	}
+	
+	async getLastFilledPricesForMarket(marketId) {
+		return await this.fetchState("market/last_filled_prices", {marketId});
+	}
+	
+	async getMarketPrices(marketId) {
+		return await this.fetchState("market/market_prices", {marketId});
+	}
+	
+	async getAvgPricesOnDate(marketId, date) {
+		return await this.fetchState("market/get_avg_prices_for_date", {marketId, date});
+	}
+
+	async getOpenOrdersForUserForMarket(marketId, accountId) {
+		return await this.fetchState("market/get_open_orders_for_user", {marketId, accountId});
+	}
+
+	async getShareBalanceForUserForMarket(marketId, accountId) {
+		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
+	}
+
+	async getAvgPricePerDateMetric(marketId, dateMetric, startDate, endDate) {
+		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, dateMetric, startDate, endDate});
+	}
+
+	async getOrderbook(marketId) {
+		return await this.fetchState("orderbook/get", {marketId});
+	}
+
+	async getAffiliateEarnings(accountId) {
+		return await this.fetchState("user/get_affiliate_earnings", {accountId});
+	}
+
+	async getOpenOrders(accountId) {
+		return await this.fetchState("user/get_order_history", {accountId});
+	}
+
+	async getOrderHistory(accountId) {
+		return await this.fetchState("user/get_open_orders", {accountId});
+	}
+
+	async fetchState(endPoint, args) {
+		const res = await fetch(`${this.indexNodeUrl}/${endPoint}`, {
+			method: "POST",
+   		headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(args)
 		});
 
-		formattedMarkets.sort((a, b) => b.liquidity - a.liquidity);
-
-		return formattedMarkets
+		const json = await res.json();
+		return json;
 	}
-
-	filterUserOrders(orders, creator) {
-		return helpers.filterUserOrders(orders, creator);
-	}
-
 }
 
 module.exports = FluxProvider;
