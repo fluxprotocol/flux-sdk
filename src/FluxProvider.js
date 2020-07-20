@@ -379,10 +379,6 @@ class FluxProvider {
 	async getLastFilledPrices(filter, limit, offset) {
 		return await this.fetchState("markets/last_filled_prices", {filter, limit, offset});
 	}
-
-	async getLastFilledPrices(filter, limit, offset) {
-		return await this.fetchState("markets/last_filled_prices", {filter, limit, offset});
-	}
 	
 	async getMarket(marketId) {
 		return await this.fetchState("market/get", {marketId});
@@ -408,8 +404,8 @@ class FluxProvider {
 		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
 	}
 
-	async getAvgPricePerDateMetric(marketId, dateMetric, startDate, endDate) {
-		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, dateMetric, startDate, endDate});
+	async getPriceHistory(marketId, startDate, endDate) {
+		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate});
 	}
 
 	async getOrderbook(marketId) {

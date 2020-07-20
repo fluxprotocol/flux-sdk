@@ -24,55 +24,46 @@ test("can get all markets from index node", async() => {
 
 test("can get last filled prices for market subset ", async() => {
 	const res = await flux.getLastFilledPrices({"categories": ["sports"]});
-	console.log(res)
 })
 
 test("can get specific market ", async() => {
 	const res = await flux.getMarket(2);
-	console.log(res)
 })
 
 test("can get market prices for specific market ", async() => {
 	const res = await flux.getMarketPrices(2);
-	console.log(res)
 })
 
 test("can get average praces of a specific date", async() => {
 	const res = await flux.getAvgPricesOnDate(2, "2020-07-17");
-	console.log(res)
 })
 
 test("can get a users open orders for a specific market", async() => {
 	const res = await flux.getOpenOrdersForUserForMarket(2, "flux-dev");
-	console.log(res)
 })
 
 test("can get a user's outcome balance for a specific market", async() => {
 	const res = await flux.getShareBalanceForUserForMarket(2, "flux-dev");
-	console.log(res)
 })
 
 test("can get historic chart data", async() => {
-	const res = await flux.getAvgPricePerDateMetric(0, "day", "2020-07-20", "2020-07-28");
-	console.log(res)
+	const res = await flux.getPriceHistory(0, "2020-07-20", "2020-07-28");
+	console.log(res);
+
 })
 
 test("can get orderbook", async() => {
 	const res = await flux.getOrderbook(2);
-	console.log(res)
 })
 
 test("can get a user's affiliate earnings", async() => {
 	const res = await flux.getAffiliateEarnings("flux-dev");
-	console.log(res)
 })
 
 test("can get a user's open orders", async() => {
 	const res = await flux.getOpenOrders("flux-dev");
-	console.log(res)
 })
 
 test("can get a user's order history", async() => {
 	const res = await flux.getOrderHistory("flux-dev");
-	console.log(res)
 })
