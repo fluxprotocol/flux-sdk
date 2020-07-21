@@ -89,6 +89,21 @@ class FluxProvider {
 	}
 
 	// Protocol Change Methods
+	async initTokenContract(totalSupply) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		return this.account.functionCall(
+			this.tokenContract.contractId,
+			"new",
+			{
+				owner_id: this.getAccountId(),
+				total_supply: totalSupply,
+			},
+			PREPAID_GAS,
+			ZERO
+		).catch(err => {
+			throw err
+		})
+	}
 
 	async addToCreatorsFunds(amount) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");

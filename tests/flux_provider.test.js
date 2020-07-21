@@ -49,7 +49,7 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 	flux.protocolContract = protocolContract;
 	flux.tokenWalletConnection = tokenWalletConnection;
 	flux.tokenContract = tokenContract;
-	console.log(flux);
+	await flux.initTokenContract("1000000000000000000000");
 });
 
 test("Is able to retrieve the accountId ", () => {
