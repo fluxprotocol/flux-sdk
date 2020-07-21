@@ -44,19 +44,44 @@ const filterUserOrders = (market, accountId) => {
 	return {openOrders, filledOrders};
 }
 
-function getConfig(contractId) {
-	return {
-		networkId: 'default',
-		nodeUrl: 'https://rpc.testnet.near.org',
-		contractName: contractId,
-		walletUrl: 'https://wallet.testnet.near.org',
-		initialBalance: 100000000
-	};
+function getConfig(networkName, contractId, walletUrl, nodeUrl) {
+	let network;
+	switch(networkName) {
+
+		case "mainnet":
+			network =  {
+				networkId: 'mainnet',
+				nodeUrl: 'https://rpcnear.org',
+				contractName: contractId,
+				walletUrl: 'https://wallet.near.org',
+				initialBalance: 100000000
+			};
+			break;
+		case "custom":
+			network = {
+				networkId: 'custom',
+				nodeUrl,
+				contractName: contractId,
+				walletUrl,
+				initialBalance: 100000000
+			}
+		default :
+			network =  {
+				networkId: 'testnet',
+				nodeUrl: 'https://rpc.testnet.near.org',
+				contractName: contractId,
+				walletUrl: 'https://wallet.testnet.near.org',
+				initialBalance: 100000000
+			};
+	}
+
+	return network;
 
 };
 function encode_utf8( s ){
 	return unescape( encodeURIComponent( s ) );
 }
+
 
 module.exports = {
 	filterUserOrders,
