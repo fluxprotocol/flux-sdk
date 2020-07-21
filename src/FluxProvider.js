@@ -31,40 +31,8 @@ class FluxProvider {
 		this.keyStore = keyStore;
 	}
 
-	getConfig(networkName, contractId, walletUrl, nodeUrl) {
-		let network;
-		switch(networkName) {
-			case "mainnet":
-				network =  {
-					networkId: 'mainnet',
-					nodeUrl: 'https://rpcnear.org',
-					contractName: contractId,
-					walletUrl: 'https://wallet.near.org',
-					initialBalance: 100000000
-				};
-				break;
-			case "custom":
-				network = {
-					networkId: 'custom',
-					nodeUrl,
-					contractName: contractId,
-					walletUrl,
-					initialBalance: 100000000
-				};
-			default :
-				network =  {
-					networkId: 'testnet',
-					nodeUrl: 'https://rpc.testnet.near.org',
-					contractName: contractId,
-					walletUrl: 'https://wallet.testnet.near.org',
-					initialBalance: 100000000
-				};
-		}
-		return network;
-	};
-
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
-		this.near = await connect({...helpers.getConfig(this.network, contractId, customNodeUrl, customWalletUrl), deps: this.keyStore });
+		this.near = await connect({...helpers.getConfig(this.network, protocolContractId, customNodeUrl, customWalletUrl), deps: this.keyStore });
 
 		if (typeof window !== 'undefined') {
 			this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
