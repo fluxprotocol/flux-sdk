@@ -16,7 +16,7 @@ const filterUserOrders = (market, accountId) => {
 	const filledOrderPrices = {};
 	const openOrders= [];
 	const filledOrders= [];
-	
+
 	for (const outcome in market.orderbooks) {
 		const orderbook = market.orderbooks[outcome];
 		if (!filledOrderPrices[outcome]) filledOrderPrices[outcome] = {};
@@ -47,7 +47,6 @@ const filterUserOrders = (market, accountId) => {
 function getConfig(networkName, contractId, walletUrl, nodeUrl) {
 	let network;
 	switch(networkName) {
-
 		case "mainnet":
 			network =  {
 				networkId: 'mainnet',
@@ -64,7 +63,7 @@ function getConfig(networkName, contractId, walletUrl, nodeUrl) {
 				contractName: contractId,
 				walletUrl,
 				initialBalance: 100000000
-			}
+			};
 		default :
 			network =  {
 				networkId: 'testnet',
@@ -74,10 +73,9 @@ function getConfig(networkName, contractId, walletUrl, nodeUrl) {
 				initialBalance: 100000000
 			};
 	}
-
 	return network;
-
 };
+
 function encode_utf8( s ){
 	return unescape( encodeURIComponent( s ) );
 }
