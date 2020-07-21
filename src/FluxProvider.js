@@ -374,7 +374,7 @@ class FluxProvider {
 	}
 
 	// Token Change methods
-	async claimFdai() {
+	async claimFDai() {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		return this.account.functionCall(
 			this.tokenContract.contractId,
@@ -411,7 +411,6 @@ class FluxProvider {
 		// const provider = this.account.connection.provider;
 		// const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
 		// const state = res.values[0].value;
-
 		return this.protocolContract.get_all_markets();
 	}
 
