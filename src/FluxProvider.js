@@ -13,23 +13,59 @@ const {
 	tokenChangeMethods
 } = require('./../constants');
 const helpers = require("./helpers");
+const fetch = require("node-fetch");
 const PREPAID_GAS = new BN("1000000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
-	constructor() {
+	constructor(network = "testnet", indexNodeUrl = "http://localhost:3001", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
 		this.connected = false;
+		this.indexNodeUrl = indexNodeUrl;
+		this.network = network;
 		this.near = null;
 		this.protocolContract = null;
 		this.tokenContract = null;
 		this.protocolWalletConnection = null;
 		this.tokenWalletConnection = null;
 		this.account = null;
-		this.keyStores = keyStores;
+		this.keyStore = keyStore;
 	}
 
-	async connect(protocolContractId, tokenContractId, keyStore, accountId) {
-		this.near = await connect({...helpers.getConfig(protocolContractId), deps: { keyStore: keyStore ? keyStore : new keyStores.BrowserLocalStorageKeyStore() } });
+	getConfig(networkName, contractId, walletUrl, nodeUrl) {
+		let network;
+		switch(networkName) {
+			case "mainnet":
+				network =  {
+					networkId: 'mainnet',
+					nodeUrl: 'https://rpcnear.org',
+					contractName: contractId,
+					walletUrl: 'https://wallet.near.org',
+					initialBalance: 100000000
+				};
+				break;
+			case "custom":
+				network = {
+					networkId: 'custom',
+					nodeUrl,
+					contractName: contractId,
+					walletUrl,
+					initialBalance: 100000000
+				};
+			default :
+				network =  {
+					networkId: 'testnet',
+					nodeUrl: 'https://rpc.testnet.near.org',
+					contractName: contractId,
+					walletUrl: 'https://wallet.testnet.near.org',
+					initialBalance: 100000000
+				};
+		}
+		return network;
+	};
+
+	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
+		this.near = await connect({...helpers.getConfig(this.network, contractId, customNodeUrl, customWalletUrl), deps: this.keyStore });
+
 		if (typeof window !== 'undefined') {
 			this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
 			this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
@@ -360,19 +396,6 @@ class FluxProvider {
 		})
 	}
 
-	async setTest() {
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"set_test",
-			{
-			},
-			PREPAID_GAS,
-			ZERO
-		).catch(err => {
-			throw err
-		})
-	}
-
 	// Token Change methods
 	async claimFDai() {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
@@ -406,66 +429,10 @@ class FluxProvider {
 	}
 
 	// Protocol View Methods
-
-	async getAllMarkets() {
-		// const provider = this.account.connection.provider;
-		// const res = await provider.sendJsonRpc('query', {"request_type": "view_state", "finality": "final", "account_id": this.contract.contractId, "prefix_base64": ""})
-		// const state = res.values[0].value;
-		return this.protocolContract.get_all_markets();
-	}
-
-	async getMarketsById(ids) {
-		return this.protocolContract.get_markets_by_id({market_ids: ids})
-	}
-
-	async getMarket(id) {
-		return this.protocolContract.get_market({id});
-	}
-
-	async getMarketVolume(marketId) {
-		return this.protocolContract.get_market_volume({
-			market_id: marketId,
-		});
-	}
-
-	async getMarketSellDepth(marketId, outcome, shares) {
-		return this.protocolContract.get_market_sell_depth({
-			market_id: marketId,
-			outcome,
-			shares
-		});
-	}
-
-	// TODO: Maybe modify? Check for overlaps
 	async getFDaiBalance() {
 		return this.contract.get_fdai_balance({
 			account_id: this.getAccountId()
 		});
-	}
-
-	async getFDaiMetrics() {
-		return this.protocolContract.get_fdai_metrics();
-	}
-
-	async getLiquidity(marketId, outcome, price) {
-		return this.protocolContract.get_liquidity({"market_id": marketId, outcome, price})
-	}
-
-	async getOutcomeShareBalance(marketId, outcome) {
-		return this.protocolContract.get_outcome_share_balance({
-			account_id: this.getAccountId(),
-			market_id: marketId,
-			outcome
-		});
-	}
-
-	async getDepth(marketId, outcome, price, spend) {
-		return this.protocolContract.get_depth({
-			market_id: marketId,
-			outcome,
-			spend,
-			price
-		})
 	}
 
 	// TODO: Maybe modify fungible token contract to also get owner?
@@ -473,37 +440,10 @@ class FluxProvider {
 		return this.protocolContract.get_owner();
 	}
 
-	async getOpenOrdersLen(marketId, outcome) {
-		return this.protocolContract.get_open_orders_len({
-			market_id: marketId,
-			outcome: outcome
-		});
-	}
-
-	async getFilledOrdersLen(marketId, outcome) {
-		return this.protocolContract.get_filled_orders_len({
-			market_id: marketId,
-			outcome: outcome
-		});
-	}
-
 	async getClaimable(marketId, accountId = this.getAccountId()) {
 		return this.protocolContract.get_claimable({
 			market_id: marketId,
 			account_id: accountId
-		});
-	}
-
-	async getMarketPrice(marketId, outcome) {
-		return this.protocolContract.get_market_price({
-			market_id: marketId,
-			outcome: outcome,
-		});
-	}
-
-	async getActiveResolutionWindow(marketId){
-		return this.protocolContract.get_active_resolution_window({
-			market_id: marketId
 		});
 	}
 
@@ -536,26 +476,72 @@ class FluxProvider {
 	}
 
 	// Helper functions
-	formatMarkets(marketsObj) {
-		const formattedMarkets = Object.keys(marketsObj).map(key => {
-			let market = marketsObj[key];
-			market.getMarketPrices = () => this.protocolContract.get_best_prices({market_id: market.id});
-			market.getOrderbooks = async () => {
-				const updatedMarkets = await this.getMarketsById([market.id]);
-				return updatedMarkets[market.id.toString()].orderbooks;
-			};
-			return market;
+	isSignedIn() {
+		return this.walletConnection.isSignedIn();
+	}
+
+	async getMarkets(filter, limit, offset) {
+		return await this.fetchState("markets/get", {filter, limit, offset});
+	}
+
+	async getLastFilledPrices(filter, limit, offset) {
+		return await this.fetchState("markets/last_filled_prices", {filter, limit, offset});
+	}
+
+	async getMarket(marketId) {
+		return await this.fetchState("market/get", {marketId});
+	}
+
+	async getLastFilledPricesForMarket(marketId) {
+		return await this.fetchState("market/last_filled_prices", {marketId});
+	}
+
+	async getMarketPrices(marketId) {
+		return await this.fetchState("market/market_prices", {marketId});
+	}
+
+	async getAvgPricesOnDate(marketId, date) {
+		return await this.fetchState("market/get_avg_prices_for_date", {marketId, date});
+	}
+
+	async getOpenOrdersForUserForMarket(marketId, accountId) {
+		return await this.fetchState("market/get_open_orders_for_user", {marketId, accountId});
+	}
+
+	async getShareBalanceForUserForMarket(marketId, accountId) {
+		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
+	}
+
+	async getPriceHistory(marketId, startDate, endDate, dateMetrics) {
+		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate, dateMetrics});
+	}
+
+	async getOrderbook(marketId) {
+		return await this.fetchState("orderbook/get", {marketId});
+	}
+
+	async getAffiliateEarnings(accountId) {
+		return await this.fetchState("user/get_affiliate_earnings", {accountId});
+	}
+
+	async getOpenOrders(accountId) {
+		return await this.fetchState("user/get_order_history", {accountId});
+	}
+
+	async getOrderHistory(accountId) {
+		return await this.fetchState("user/get_open_orders", {accountId});
+	}
+
+	async fetchState(endPoint, args) {
+		const res = await fetch(`${this.indexNodeUrl}/${endPoint}`, {
+			method: "POST",
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(args)
 		});
-
-		formattedMarkets.sort((a, b) => b.liquidity - a.liquidity);
-
-		return formattedMarkets
 	}
-
-	filterUserOrders(orders, creator) {
-		return helpers.filterUserOrders(orders, creator);
-	}
-
 }
 
 module.exports = FluxProvider;
