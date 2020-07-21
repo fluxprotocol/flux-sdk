@@ -158,7 +158,7 @@ test("Is able to resolute a market", async () => {
 });
 
 test("Can retrieve active resolution window", async () => {
-	const window = await flux.getActiveResolutionWindow(0).then(window => { return window });
+	const window = await flux.getActiveResolutionWindow("0").then(window => { return window });
 });
 
 test("Is able to withdraw dispute on a market", async() => {
