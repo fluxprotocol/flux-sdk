@@ -404,8 +404,8 @@ class FluxProvider {
 		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
 	}
 
-	async getPriceHistory(marketId, startDate, endDate) {
-		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate});
+	async getPriceHistory(marketId, startDate, endDate, dateMetrics) {
+		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate, dateMetrics});
 	}
 
 	async getOrderbook(marketId) {
