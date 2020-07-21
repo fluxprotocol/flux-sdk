@@ -14,7 +14,7 @@ const {
 } = require('./../constants');
 const helpers = require("./helpers");
 const fetch = require("node-fetch");
-const PREPAID_GAS = new BN("1000000000000000");
+const PREPAID_GAS = new BN("300000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
@@ -33,34 +33,26 @@ class FluxProvider {
 
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
 		this.near = await connect({...helpers.getConfig(this.network, protocolContractId, customNodeUrl, customWalletUrl), deps: this.keyStore });
+		this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
+		this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
 
 		if (typeof window !== 'undefined') {
-			this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
-			this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
 			this.account = this.protocolWalletConnection.account();
-			this.protocolContract = new Contract(this.account, protocolContractId, {
-				protocolViewMethods,
-				protocolChangeMethods,
-				sender: this.protocolWalletConnection.getAccountId(),
-			});
-			this.tokenContract = new Contract(this.account, tokenContractId, {
-				tokenViewMethods,
-				tokenChangeMethods,
-				sender: this.tokenWalletConnection.getAccountId(),
-			});
 		} else {
 			this.account = await this.near.account(accountId);
-			this.protocolContract = new Contract(this.account, protocolContractId, {
-				protocolViewMethods,
-				protocolChangeMethods,
-				sender: this.protocolWalletConnection.getAccountId(),
-			});
-			this.tokenContract = new Contract(this.account, tokenContractId, {
-				tokenViewMethods,
-				tokenChangeMethods,
-				sender: this.tokenWalletConnection.getAccountId(),
-			});
 		}
+
+		this.protocolContract = new Contract(this.account, protocolContractId, {
+			protocolViewMethods,
+			protocolChangeMethods,
+			sender: accountId,
+		});
+		this.tokenContract = new Contract(this.account, tokenContractId, {
+			tokenViewMethods,
+			tokenChangeMethods,
+			sender: accountId,
+		});
+
 		this.connected = true;
 	}
 
@@ -88,18 +80,27 @@ class FluxProvider {
 		this.tokenWalletConnection.signOut();
 	}
 
+	async initProtocol(contractId, creator) {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+
+		return this.protocolContract.set_fun_token_account_id(
+			{
+				account_id: contractId,
+				creator
+			},
+		).catch(err => {
+			throw err
+		})
+	}
 	// Protocol Change Methods
 	async initTokenContract(totalSupply) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		return this.account.functionCall(
-			this.tokenContract.contractId,
-			"new",
+
+		return this.tokenContract.new(
 			{
 				owner_id: this.getAccountId(),
 				total_supply: totalSupply,
 			},
-			PREPAID_GAS,
-			ZERO
 		).catch(err => {
 			throw err
 		})
@@ -134,9 +135,7 @@ class FluxProvider {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (affiliateFeePercentage >= 100 || affiliateFeePercentage < 0) throw new Error("Invalid affiliate fee percentage");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
-		return this.account.functionCall(
-			this.protocolContract.contractId, // Target contract
-			"create_market", // Method call
+		return this.protocolContract.create_market(
 			{
 				description,
 				extra_info: extraInfo,
@@ -148,27 +147,12 @@ class FluxProvider {
 				affiliate_fee_percentage: affiliateFeePercentage,
 				api_source: ""
 			},
-			PREPAID_GAS, // Prepaid gas
-			ZERO // NEAR deposit
+			PREPAID_GAS,
+			ZERO
 		).catch(err => {
 			throw err
 		})
 	}
-
-	//// TODO: make absolete, just here for demo purposes
-	//async claimFDai() {
-	//	if (!this.account) throw new Error("Need to sign in to perform this method");
-	       //
-	//	return this.account.functionCall(
-	//		this.protocolContract.contractId,
-	//		"claim_fdai",
-	//		{},
-	//		PREPAID_GAS * 3,
-	//		ZERO
-	//	).catch(err => {
-	//		throw err
-	//	})
-	//}
 
 	async deleteMarket(marketId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
@@ -193,9 +177,7 @@ class FluxProvider {
 		if (pricePerShare < 0 || pricePerShare > 99)  throw new Error("Invalid price, price needs to be between 1 and 99");
 		if (pricePerShare < 0 ) throw new Error("Invalid price per share");
 
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"place_order",
+		return this.protocolContract.place_order(
 			{
 				market_id: marketId,
 				outcome: outcome,
@@ -203,7 +185,7 @@ class FluxProvider {
 				price: pricePerShare,
 				affiliate_account_id: affiliateAccountId,
 			},
-			PREPAID_GAS * 3,
+			PREPAID_GAS,
 			ZERO
 		).catch(err => {
 			throw err
@@ -216,9 +198,7 @@ class FluxProvider {
 		if (outcome < 0) throw new Error("Invalid outcome id");
 		if (orderId < 0 )  throw new Error("Invalid order id");
 
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"cancel_order",
+		return this.protocolContract.cancel_order(
 			{
 				market_id: marketId,
 				outcome: outcome,
@@ -256,9 +236,7 @@ class FluxProvider {
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"resolute_market",
+		return this.protocolContract.resolute_market(
 			{
 				market_id: marketId,
 				winning_outcome: winningOutcome,
@@ -275,9 +253,7 @@ class FluxProvider {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"dispute_market",
+		return this.protocolContract.dispute_market(
 			{
 				market_id: marketId,
 				winning_outcome: winningOutcome,
@@ -296,9 +272,7 @@ class FluxProvider {
 		if (disputeRound < 0) throw new Error("Invalid dispute round");
 		if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
 
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"withdraw_dispute_stake",
+		return this.protocolContract.withdraw_dispute_stake(
 			{
 				market_id: marketId,
 				dispute_round: disputeRound,
@@ -334,9 +308,7 @@ class FluxProvider {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"claim_earnings",
+		return this.protocolContract.claim_earnings(
 			{
 				market_id: marketId,
 				account_id: accountId
@@ -350,27 +322,9 @@ class FluxProvider {
 
 	async claimAffiliateEarnings(accountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"claim_affiliate_earnings",
+		return this.protocolContract.claim_affiliate_earnings(
 			{
 				account_id: accountId,
-			},
-			PREPAID_GAS,
-			ZERO
-		).catch(err => {
-			throw err
-		})
-	}
-
-	async claimCreatorFee(marketId) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Invalid market id");
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"claim_creator_fee",
-			{
-				market_id: marketId,
 			},
 			PREPAID_GAS,
 			ZERO
@@ -397,15 +351,11 @@ class FluxProvider {
 
 	async setAllowance(escrowAccountId, allowance) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
-		return this.account.functionCall(
-			this.tokenContract.contractId,
-			"set_allowance",
+		return this.tokenContract.set_allowance(
 			{
 				escrow_account_id: escrowAccountId,
 				allowance: allowance,
-			},
-			PREPAID_GAS,
-			ZERO
+			}
 		).catch(err => {
 			throw err
 		})
@@ -447,7 +397,7 @@ class FluxProvider {
 	// General View Methods
 
 	getAccountId() {
-		return this.protocolWalletConnection.getAccountId();
+		return this.account.accountId;
 	}
 
 	isSignedInProtocol() {
