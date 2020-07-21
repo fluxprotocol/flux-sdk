@@ -10,7 +10,6 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 
 test("can get all markets from index node", async() => {
 	const markets = await flux.getMarkets();
-	console.log(markets)
 	const sportsMarkets = await flux.getMarkets({"categories": ["sports"]});
 	expect(sportsMarkets.length == 1);
 	
@@ -48,8 +47,6 @@ test("can get a user's outcome balance for a specific market", async() => {
 
 test("can get historic chart data", async() => {
 	const res = await flux.getPriceHistory(0, "2020-07-20", "2020-07-28", ["day"]);
-	console.log(res);
-
 })
 
 test("can get orderbook", async() => {

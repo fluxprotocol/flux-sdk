@@ -509,6 +509,8 @@ class FluxProvider {
 			},
 			body: JSON.stringify(args)
 		});
+
+		return await res.json()
 	}
 }
 
