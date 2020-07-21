@@ -32,7 +32,7 @@ beforeAll(async () => {
 });
 
 test("Is able to connect to the NEAR blockchain & initiate Flux smart contract instance", async () => {
-	flux = new FluxProvider();
+	flux = new FluxProvider('custom');
 	const {
 		near,
 		protocolWalletConnection,
@@ -41,7 +41,7 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 		tokenContract
 	} = await testUtils.setUpTestFluxConnection(workingAccount, protocolContractId, tokenContractId);
 
-	await flux.connect("development", "flux_protocol_alpha");
+	await flux.connect(protocolContractId, tokenContractId, workingAccount, 'http://localhost:3030');
 
 	flux.near = near;
 	flux.account = workingAccount;
@@ -49,7 +49,7 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 	flux.protocolContract = protocolContract;
 	flux.tokenWalletConnection = tokenWalletConnection;
 	flux.tokenContract = tokenContract;
-
+	console.log(flux);
 });
 
 test("Is able to retrieve the accountId ", () => {
