@@ -50,12 +50,6 @@ test("Is able to retrieve the accountId ", () => {
 	expect(accountId).toBe(workingAccount.accountId);
 });
 
-// TODO
-test("Has fungible token", async () => {
-	const balance = await flux.signInProtocol();
-	expect(balance).toBe("100000000000000000000000");
-});
-
 test('Is able to set an allowance', async () => {
 	await flux.setAllowance(flux.protocolContract.contractId, '100000000000000000000000');
 	const allowance = await flux.getAllowance(workingAccount.accountId, flux.protocolContract.contractId);
