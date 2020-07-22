@@ -34,11 +34,10 @@ class FluxProvider {
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
 		this.near = await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
 
-		this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
-		this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
+		this.walletConnection = new WalletConnection(this.near, protocolContractId);
 
 		if (typeof window !== 'undefined') {
-			this.account = this.protocolWalletConnection.account();
+			this.account = this.walletConnection.account();
 		} else {
 			this.account = await this.near.account(accountId);
 		}
@@ -65,32 +64,6 @@ class FluxProvider {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (!this.protocolWalletConnection.getAccountId()) throw new Error(`No signed in session found`);
 		this.protocolWalletConnection.signOut();
-	}
-
-	async initProtocol(contractId, creator) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-
-		return this.protocolContract.set_fun_token_account_id(
-			{
-				account_id: contractId,
-				creator
-			},
-		).catch(err => {
-			throw err
-		})
-	}
-	// Protocol Change Methods
-	async initTokenContract(totalSupply) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-
-		return this.tokenContract.new(
-			{
-				owner_id: this.getAccountId(),
-				total_supply: totalSupply,
-			},
-		).catch(err => {
-			throw err
-		})
 	}
 
 	async addToCreatorsFunds(amount) {
@@ -448,6 +421,32 @@ class FluxProvider {
 
 		return await res.json()
 	}
+
+		// Only for unittests
+		async initProtocol(contractId, creator) {
+			if (!this.account) throw new Error("Need to sign in to perform this method");
+	
+			return this.protocolContract.set_fun_token_account_id(
+				{
+					account_id: contractId,
+					creator
+				},
+			).catch(err => {
+				throw err
+			})
+		}
+		async initTokenContract(totalSupply) {
+			if (!this.account) throw new Error("Need to sign in to perform this method");
+	
+			return this.tokenContract.new(
+				{
+					owner_id: this.getAccountId(),
+					total_supply: totalSupply,
+				},
+			).catch(err => {
+				throw err
+			})
+		}
 }
 
 module.exports = FluxProvider;
