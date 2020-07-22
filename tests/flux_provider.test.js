@@ -52,7 +52,7 @@ test("Is able to retrieve the accountId ", () => {
 
 // TODO
 test("Has fungible token", async () => {
-	const balance = await flux.getBalance(workingAccount.accountId);
+	const balance = await flux.signInProtocol();
 	expect(balance).toBe("100000000000000000000000");
 });
 

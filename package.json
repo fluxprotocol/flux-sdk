@@ -1,6 +1,6 @@
 {
   "name": "flux-sdk",
-  "version": "0.0.46",
+  "version": "0.0.51",
   "description": "Flux protocol SDK",
   "main": "src/FluxProvider.js",
   "scripts": {
@@ -26,21 +26,21 @@
   },
   "homepage": "https://github.com/fluxprotocol/flux-sdk#readme",
   "dependencies": {
-    "bn.js": "^5.1.1",
+    "bn.js": "^5.1.2",
     "near-api-js": "^0.27.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.3",
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/preset-env": "^7.8.3",
-    "node-fetch": "^2.6.0",
-    "whatwg-fetch": "^3.0.0",
-    "babel-jest": "^25.1.0",
+    "@babel/core": "^7.10.5",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "babel-jest": "^25.5.1",
     "babel-plugin-transform-default-import": "^1.0.0",
-    "jest": "^25.1.0",
-    "jest-cli": "^25.1.0",
-    "terser-webpack-plugin": "^2.3.5",
-    "webpack": "^4.42.0",
-    "webpack-cli": "^3.3.11"
+    "jest": "^25.5.4",
+    "jest-cli": "^25.5.4",
+    "node-fetch": "^2.6.0",
+    "terser-webpack-plugin": "^2.3.7",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.12",
+    "whatwg-fetch": "^3.2.0"
   }
 }

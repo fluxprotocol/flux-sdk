@@ -43,14 +43,12 @@ class FluxProvider {
 		}
 
 		this.protocolContract = new Contract(this.account, protocolContractId, {
-			protocolViewMethods,
-			protocolChangeMethods,
-			sender: accountId,
+			viewMethods: protocolViewMethods,
+			changeMethods: protocolChangeMethods,
 		});
 		this.tokenContract = new Contract(this.account, tokenContractId, {
-			tokenViewMethods,
-			tokenChangeMethods,
-			sender: accountId,
+			viewMethods: tokenViewMethods,
+			changeMethods: tokenChangeMethods,
 		});
 
 		this.connected = true;
@@ -146,22 +144,6 @@ class FluxProvider {
 				creator_fee_percentage: marketCreationFee,
 				affiliate_fee_percentage: affiliateFeePercentage,
 				api_source: ""
-			},
-			PREPAID_GAS,
-			ZERO
-		).catch(err => {
-			throw err
-		})
-	}
-
-	async deleteMarket(marketId) {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Market id must be >= 0");
-		return this.account.functionCall(
-			this.protocolContract.contractId,
-			"delete_market",
-			{
-				market_id: marketId,
 			},
 			PREPAID_GAS,
 			ZERO
