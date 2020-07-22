@@ -55,27 +55,16 @@ class FluxProvider {
 		this.connected = true;
 	}
 
-	signInProtocol() {
+	signIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.protocolWalletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol",null , null,true);	}
+		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol");	
+	}
 
-	signOutProtocol() {
+	signOut() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (!this.protocolWalletConnection.getAccountId()) throw new Error(`No signed in session found`);
 		this.protocolWalletConnection.signOut();
-	}
-
-	signInToken() {
-		if (!this.near) throw new Error("No connection to NEAR found");
-		if (this.tokenWalletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol",null , null,true);
-	}
-
-	signOutToken() {
-		if (!this.near) throw new Error("No connection to NEAR found");
-		if (!this.tokenWalletConnection.getAccountId()) throw new Error(`No signed in session found`);
-		this.tokenWalletConnection.signOut();
 	}
 
 	async initProtocol(contractId, creator) {
