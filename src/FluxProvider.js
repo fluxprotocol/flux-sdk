@@ -32,7 +32,8 @@ class FluxProvider {
 	}
 
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
-		this.near = await connect({...helpers.getConfig(this.network, protocolContractId, customNodeUrl, customWalletUrl), deps: this.keyStore });
+		this.near = await connect({...helpers.getConfig(this.network, protocolContractId, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
+
 		this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
 		this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
 
