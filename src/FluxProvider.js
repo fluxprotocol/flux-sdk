@@ -32,7 +32,7 @@ class FluxProvider {
 	}
 
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
-		this.near = await connect({...helpers.getConfig(this.network, protocolContractId, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
+		this.near = await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
 
 		this.protocolWalletConnection = new WalletConnection(this.near, protocolContractId);
 		this.tokenWalletConnection = new WalletConnection(this.near, tokenContractId);
@@ -58,8 +58,7 @@ class FluxProvider {
 	signInProtocol() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.protocolWalletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.protocolWalletConnection.requestSignIn(this.protocolContract.contractId, "Flux-protocol");
-	}
+		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol",null , null,true);	}
 
 	signOutProtocol() {
 		if (!this.near) throw new Error("No connection to NEAR found");
@@ -70,7 +69,7 @@ class FluxProvider {
 	signInToken() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.tokenWalletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol");
+		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol",null , null,true);
 	}
 
 	signOutToken() {
