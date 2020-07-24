@@ -64,3 +64,17 @@ test("can get a user's open orders", async() => {
 test("can get a user's order history", async() => {
 	const res = await flux.getOrderHistory("flux-dev");
 })
+
+test("can get claimable earnings from tradin", async() => {
+	const res = await flux.getTradingClaimble("flux-dev", 0);
+})
+
+test("can get all finalized markets that a user participated in", async() => {
+	const res = await flux.getOrderHistory("flux-dev");
+	expect(res.length == 0);
+})
+
+test("can all markets that are currently resoluting", async() => {
+	const res = await flux.getOrderHistory();
+	expect(res.length == 3);
+})
