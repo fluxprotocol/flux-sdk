@@ -25,8 +25,7 @@ class FluxProvider {
 		this.near = null;
 		this.protocolContract = null;
 		this.tokenContract = null;
-		this.protocolWalletConnection = null;
-		this.tokenWalletConnection = null;
+		this.walletConnection = null;
 		this.account = null;
 		this.keyStore = keyStore;
 	}
@@ -56,14 +55,14 @@ class FluxProvider {
 
 	signIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
-		if (this.protocolWalletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.tokenWalletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol");	
+		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+		this.walletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol");	
 	}
 
 	signOut() {
 		if (!this.near) throw new Error("No connection to NEAR found");
-		if (!this.protocolWalletConnection.getAccountId()) throw new Error(`No signed in session found`);
-		this.protocolWalletConnection.signOut();
+		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
+		this.walletConnection.signOut();
 	}
 
 	async addToCreatorsFunds(amount) {
@@ -338,18 +337,8 @@ class FluxProvider {
 		return this.tokenContract.get_allowance({owner_id: ownerId, escrow_account_id: escrowAccountId});
 	}
 
-	// General View Methods
-
 	getAccountId() {
 		return this.account.accountId;
-	}
-
-	isSignedInProtocol() {
-		return this.protocolWalletConnection.isSignedIn();
-	}
-
-	isSignedInToken() {
-		return this.tokenWalletConnection.isSignedIn();
 	}
 
 	// Helper functions
