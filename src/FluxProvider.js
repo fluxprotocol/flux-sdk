@@ -409,16 +409,20 @@ class FluxProvider {
 		return await this.fetchState("user/get_open_orders", {accountId});
 	}
 
-	async getTradingClaimble(accountId, marketId) {
-		return await this.fetchState("earnings/get_trading", {accountId, marketId});
-	}
-
 	async getFinalizedParticipatedMarkets(accountId) {
 		return await this.fetchState("markets/get_finalized_participated_markets", {accountId});
 	}
 
-	async getResolutingMarkets(accountId) {
+	async getResolutingMarkets() {
 		return await this.fetchState("markets/get_resoluting");
+	}
+
+	async getResolutionState() {
+		return await this.fetchState("markets/get_resolution_state");
+	}
+
+	async getTradeEarnings(marketId, accountId) {
+		return await this.fetchState("earnings/get_trading_earnings", {marketId, accountId});
 	}
 
 	async fetchState(endPoint, args) {
