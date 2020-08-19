@@ -18,7 +18,7 @@ const PREPAID_GAS = new BN("300000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
-	constructor(network = "testnet", indexNodeUrl = "http://localhost:3001", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
+	constructor(network = "testnet", indexNodeUrl = "api.flux.market", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
 		this.connected = false;
 		this.indexNodeUrl = indexNodeUrl;
 		this.network = network;
