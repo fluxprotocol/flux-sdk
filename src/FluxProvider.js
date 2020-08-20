@@ -18,7 +18,7 @@ const PREPAID_GAS = new BN("300000000000000");
 const ZERO = new BN("0");
 
 class FluxProvider {
-	constructor(network = "testnet", indexNodeUrl = "api.flux.market", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
+	constructor(network = "testnet", indexNodeUrl = "https://api.flux.market", keyStore = new keyStores.BrowserLocalStorageKeyStore()) {
 		this.connected = false;
 		this.indexNodeUrl = indexNodeUrl;
 		this.network = network;
@@ -98,12 +98,12 @@ class FluxProvider {
 			{
 				description,
 				extra_info: extraInfo,
-				outcomes,
+				outcomes: outcome.toString(),
 				outcome_tags: outcomeTags,
 				categories: categories,
-				end_time: endTime,
-				creator_fee_percentage: marketCreationFee,
-				affiliate_fee_percentage: affiliateFeePercentage,
+				end_time: endTime.toString(),
+				creator_fee_percentage: marketCreationFee.toString(),
+				affiliate_fee_percentage: affiliateFeePercentage.toString(),
 				api_source: ""
 			},
 			PREPAID_GAS,
@@ -122,10 +122,10 @@ class FluxProvider {
 
 		return this.protocolContract.place_order(
 			{
-				market_id: marketId,
-				outcome: outcome,
-				spend: spend,
-				price: pricePerShare,
+				market_id: marketId.toString(),
+				outcome: outcome.toString(),
+				spend: spend.toString(),
+				price: pricePerShare.toString(),
 				affiliate_account_id: affiliateAccountId,
 			},
 			PREPAID_GAS,
@@ -143,9 +143,9 @@ class FluxProvider {
 
 		return this.protocolContract.cancel_order(
 			{
-				market_id: marketId,
-				outcome: outcome,
-				order_id: orderId,
+				market_id: marketId.toString(),
+				outcome: outcome.toString(),
+				order_id: orderId.toString(),
 			},
 			PREPAID_GAS,
 			ZERO
@@ -276,40 +276,18 @@ class FluxProvider {
 		})
 	}
 
-	// Token Change methods
-	async claimFDai() {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		return this.account.functionCall(
-			this.tokenContract.contractId,
-			"claim_fdai",
-			{
-				account_id: this.getAccountId(),
-			},
-			PREPAID_GAS,
-			ZERO
-		).catch(err => {
-			throw err
-		})
-	}
-
 	async setAllowance(escrowAccountId, allowance) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		return this.tokenContract.set_allowance(
 			{
 				escrow_account_id: escrowAccountId,
-				allowance: allowance,
+				allowance: allowance.toString(),
 			}
 		).catch(err => {
 			throw err
 		})
 	}
 
-	// Protocol View Methods
-	async getFDaiBalance() {
-		return this.contract.get_fdai_balance({
-			account_id: this.getAccountId()
-		});
-	}
 
 	// TODO: Maybe modify fungible token contract to also get owner?
 	async getOwner() {
@@ -418,7 +396,6 @@ class FluxProvider {
 		const res = await fetch(`${this.indexNodeUrl}/${endPoint}`, {
 			method: "POST",
 			headers: {
-				'Accept': 'application/json',
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify(args)
