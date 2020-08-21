@@ -85,20 +85,22 @@ class FluxProvider {
 		return this.createMarket(description, extraInfo, "2", [], categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
 	}
 
-	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
+	createCategoricalMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage = 0, apiSource) {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
 		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
 	}
 
-	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
+	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage = 0, apiSource) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (affiliateFeePercentage >= 100 || affiliateFeePercentage < 0) throw new Error("Invalid affiliate fee percentage");
+		console.log(endTime)
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
+
 		return this.protocolContract.create_market(
 			{
 				description,
 				extra_info: extraInfo,
-				outcomes: outcome.toString(),
+				outcomes: outcomes.toString(),
 				outcome_tags: outcomeTags,
 				categories: categories,
 				end_time: endTime.toString(),
