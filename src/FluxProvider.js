@@ -56,7 +56,7 @@ class FluxProvider {
 	signIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.walletConnection.requestSignIn(this.tokenContract.contractId, "Flux-protocol");	
+		this.walletConnection.requestSignIn('null_contract.flux-dev', "Flux-protocol");	
 	}
 
 	signOut() {
@@ -81,7 +81,8 @@ class FluxProvider {
 		})
 	}
 
-	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource) {
+	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage = 0, apiSource = "") {
+		console.log(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource)
 		return this.createMarket(description, extraInfo, "2", [], categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
 	}
 
@@ -279,6 +280,7 @@ class FluxProvider {
 	}
 
 	async setAllowance(escrowAccountId, allowance) {
+		console.log("trying to set allowance")
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		return this.tokenContract.set_allowance(
 			{

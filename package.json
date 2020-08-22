@@ -1,6 +1,6 @@
 {
   "name": "flux-sdk",
-  "version": "0.0.93",
+  "version": "0.0.95",
   "description": "Flux protocol SDK",
   "main": "src/FluxProvider.js",
   "scripts": {
@@ -27,7 +27,7 @@
   "homepage": "https://github.com/fluxprotocol/flux-sdk#readme",
   "dependencies": {
     "bn.js": "^5.1.2",
-    "near-api-js": "^0.27.0"
+    "near-api-js": "^0.29.0"
   },
   "devDependencies": {
     "@babel/core": "^7.10.5",
