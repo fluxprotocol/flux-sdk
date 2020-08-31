@@ -59,6 +59,12 @@ class FluxProvider {
 		this.walletConnection.requestSignIn('null_contract.flux-dev', "Flux-protocol");	
 	}
 
+	oneClickTxSignIn() {
+		if (!this.near) throw new Error("No connection to NEAR found");
+		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+		this.walletConnection.requestSignIn(this.protocolContract.accountId, "Flux-protocol");	
+	}
+
 	signOut() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
