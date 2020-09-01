@@ -63,8 +63,9 @@ class FluxProvider {
 	oneClickTxSignIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.walletConnection = new WalletConnection(this.near, this.protocolContract.accountId);
-		this.walletConnection.requestSignIn(this.protocolContract.accountId, "Flux-protocol");	
+
+		this.walletConnection = new WalletConnection(this.near, this.tokenContract.contractId);
+		this.walletConnection.requestSignIn(this.protocolContract.contractId, "Flux-protocol");	
 	}
 
 	signOut() {
@@ -331,7 +332,7 @@ class FluxProvider {
 		return this.account.accountId;
 	}
 
-	// Helper functions
+	// Helper function
 	isSignedIn() {
 		return this.walletConnection.isSignedIn();
 	}

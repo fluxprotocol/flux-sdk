@@ -1,6 +1,6 @@
 {
   "name": "flux-sdk",
-  "version": "0.0.100",
+  "version": "0.0.102",
   "description": "Flux protocol SDK",
   "main": "src/FluxProvider.js",
   "scripts": {
