@@ -10,7 +10,8 @@ const {
 	protocolViewMethods,
 	protocolChangeMethods,
 	tokenViewMethods,
-	tokenChangeMethods
+	tokenChangeMethods,
+	NULL_CONTRACT
 } = require('./../constants');
 const helpers = require("./helpers");
 const fetch = require("node-fetch");
@@ -33,7 +34,7 @@ class FluxProvider {
 	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
 		this.near = await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
 
-		this.walletConnection = new WalletConnection(this.near, protocolContractId);
+		this.walletConnection = new WalletConnection(this.near, NULL_CONTRACT);
 
 		if (typeof window !== 'undefined') {
 			this.account = this.walletConnection.account();
@@ -56,12 +57,13 @@ class FluxProvider {
 	signIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.walletConnection.requestSignIn('null_contract.flux-dev', "Flux-protocol");	
+		this.walletConnection.requestSignIn(NULL_CONTRACT, "Flux-protocol");	
 	}
 
 	oneClickTxSignIn() {
 		if (!this.near) throw new Error("No connection to NEAR found");
 		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+		this.walletConnection = new WalletConnection(this.near, this.protocolContract.accountId);
 		this.walletConnection.requestSignIn(this.protocolContract.accountId, "Flux-protocol");	
 	}
 

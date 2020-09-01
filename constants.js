@@ -2,10 +2,11 @@ const protocolViewMethods = ["get_all_markets","get_fdai_balance", "get_market",
 const protocolChangeMethods = ["set_fun_token_account_id", "create_market", "claim_fdai", "place_order", "claim_earnings", "resolute_market", "dispute_market", "finalize_market", "withdraw_dispute_stake", "set_test", "add_to_creators_funds", "delete_market", "cancel_order", "claim_affiliate_earnings", "dynamic_market_sell"];
 const tokenViewMethods = ['get_total_supply', 'get_balance', 'get_allowance'];
 const tokenChangeMethods = ['claim_fdai', 'set_allowance', 'new'];
-
+const NULL_CONTRACT = 'null_contract.flux-dev';
 module.exports = {
 	protocolViewMethods,
 	protocolChangeMethods,
 	tokenViewMethods,
-	tokenChangeMethods
+	tokenChangeMethods,
+	NULL_CONTRACT
 };
