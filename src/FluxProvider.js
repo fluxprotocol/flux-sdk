@@ -147,7 +147,7 @@ class FluxProvider {
 		});
 	}
 
-	async cancelOrder(marketId, outcome, orderId) {
+	async cancelOrder(marketId, outcome, orderId, price) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
@@ -157,6 +157,7 @@ class FluxProvider {
 			{
 				market_id: marketId.toString(),
 				outcome: outcome.toString(),
+				price: price.toString(),
 				order_id: orderId.toString(),
 			},
 			PREPAID_GAS,
