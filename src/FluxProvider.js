@@ -125,7 +125,7 @@ class FluxProvider {
 		})
 	}
 
-	async placeOrder(marketId, outcome, spend, pricePerShare, affiliateAccountId) {
+	async placeOrder(marketId, outcome, shares, pricePerShare, affiliateAccountId) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
@@ -136,7 +136,7 @@ class FluxProvider {
 			{
 				market_id: marketId.toString(),
 				outcome: outcome.toString(),
-				spend: spend.toString(),
+				shares: shares.toString(),
 				price: pricePerShare.toString(),
 				affiliate_account_id: affiliateAccountId,
 			},
@@ -382,11 +382,11 @@ class FluxProvider {
 	}
 
 	async getOpenOrders(accountId) {
-		return await this.fetchState("user/get_order_history", {accountId});
+		return await this.fetchState("user/get_open_orders", {accountId});
 	}
 
 	async getOrderHistory(accountId) {
-		return await this.fetchState("user/get_open_orders", {accountId});
+		return await this.fetchState("user/get_order_history", {accountId});
 	}
 
 	async getFinalizedParticipatedMarkets(accountId) {
