@@ -31,8 +31,8 @@ class FluxProvider {
 		this.keyStore = keyStore;
 	}
 
-	async connect(protocolContractId, tokenContractId, accountId, customNodeUrl, customWalletUrl) {
-		this.near = await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
+	async connect(protocolContractId, tokenContractId, near, accountId, customNodeUrl, customWalletUrl) {
+		this.near = near || await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
 
 		this.walletConnection = new WalletConnection(this.near, NULL_CONTRACT);
 
@@ -391,7 +391,7 @@ class FluxProvider {
 	}
 
 	async getFinalizedParticipatedMarkets(accountId) {
-		return await this.fetchState("markets/get_finalized_participated_markets", {accountId});
+		return await this.fetchState("user/get_finalized_participated_markets", {accountId});
 	}
 
 	async getResolutingMarkets() {
