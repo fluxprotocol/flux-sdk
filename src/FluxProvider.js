@@ -31,10 +31,9 @@ class FluxProvider {
 		this.keyStore = keyStore;
 	}
 
-	async connect(protocolContractId, tokenContractId, near, accountId, customNodeUrl, customWalletUrl) {
-		this.near = near || await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
-
-		this.walletConnection = new WalletConnection(this.near, NULL_CONTRACT);
+	async connect(protocolContractId, tokenContractId, accountId, nearInstance, walletInstance, customNodeUrl, customWalletUrl) {
+		this.near = nearInstance || await connect({...helpers.getConfig(this.network, null, customNodeUrl, customWalletUrl), deps: { keyStore: this.keyStore } });
+		this.walletConnection = walletInstance || new WalletConnection(this.near, NULL_CONTRACT);
 
 		if (typeof window !== 'undefined') {
 			this.account = this.walletConnection.account();
