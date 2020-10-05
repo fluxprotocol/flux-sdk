@@ -6,6 +6,7 @@ const {
 	keyStores,
 	utils
 } = require('near-api-js');
+
 const {
 	protocolViewMethods,
 	protocolChangeMethods,
@@ -90,7 +91,6 @@ class FluxProvider {
 	}
 
 	createBinaryMarket(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage = 0, apiSource = "") {
-		console.log(description, extraInfo, categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource)
 		return this.createMarket(description, extraInfo, "2", [], categories, endTime, marketCreationFee, affiliateFeePercentage, apiSource);
 	}
 
@@ -102,7 +102,7 @@ class FluxProvider {
 	async createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, affiliateFeePercentage = 0, apiSource) {
 		if (!this.account.accountId) throw new Error("Need to sign in to perform this method");
 		if (affiliateFeePercentage >= 100 || affiliateFeePercentage < 0) throw new Error("Invalid affiliate fee percentage");
-		console.log(endTime)
+
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
 
 		return this.protocolContract.create_market(
@@ -151,7 +151,8 @@ class FluxProvider {
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
 		if (orderId < 0 )  throw new Error("Invalid order id");
-
+		if (price < 1 || price > 99) throw new Error("Invalid price");
+		
 		return this.protocolContract.cancel_order(
 			{
 				market_id: marketId.toString(),
@@ -166,11 +167,13 @@ class FluxProvider {
 		});
 	}
 
-	async dynamicMarketSell(marketId, outcome, shares) {
+	async dynamicMarketSell(marketId, outcome, shares, minPrice) {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
 		if (outcome < 0) throw new Error("Outcome must be >= 0");
 		if (shares < 0) throw new Error("Shares must be >= 0");
+		if (minPrice < 1 || minPrice > 99) throw new Error("Invalid min_price");
+
 		return this.account.functionCall(
 			this.protocolContract.contractId,
 			"dynamic_market_sell",
@@ -178,6 +181,7 @@ class FluxProvider {
 				market_id: marketId,
 				outcome,
 				shares,
+				min_price: minPrice
 			},
 			PREPAID_GAS,
 			ZERO
@@ -289,7 +293,6 @@ class FluxProvider {
 	}
 
 	async setAllowance(escrowAccountId, allowance) {
-		console.log("trying to set allowance")
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		return this.tokenContract.set_allowance(
 			{
@@ -301,8 +304,6 @@ class FluxProvider {
 		})
 	}
 
-
-	// TODO: Maybe modify fungible token contract to also get owner?
 	async getOwner() {
 		return this.protocolContract.get_owner();
 	}
@@ -416,32 +417,6 @@ class FluxProvider {
 
 		return await res.json()
 	}
-
-		// Only for unittests
-		async initProtocol(contractId, creator) {
-			if (!this.account) throw new Error("Need to sign in to perform this method");
-	
-			return this.protocolContract.set_fun_token_account_id(
-				{
-					account_id: contractId,
-					creator
-				},
-			).catch(err => {
-				throw err
-			})
-		}
-		async initTokenContract(totalSupply) {
-			if (!this.account) throw new Error("Need to sign in to perform this method");
-	
-			return this.tokenContract.new(
-				{
-					owner_id: this.getAccountId(),
-					total_supply: totalSupply,
-				},
-			).catch(err => {
-				throw err
-			})
-		}
 }
 
 module.exports = FluxProvider;

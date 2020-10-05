@@ -1,6 +1,7 @@
 const fs = require('fs').promises;
 const BN = require('bn.js');
 const nearApi = require('near-api-js');
+const { BalanceMismatchError } = require('near-api-js/lib/utils/rpc_errors');
 const {
 	protocolViewMethods,
 	protocolChangeMethods,
@@ -16,7 +17,7 @@ const FLUX_FUNGIBLE_WASM_PATH = './tests/fungible_token.wasm';
 const BALANCE = new BN('200000000000000000000000000');
 
 async function deployContracts(workingAccount, protocolContractId, tokenContractId) {
-    const protocolContract = await deployProtocolContract(workingAccount, protocolContractId)
+    const protocolContract = await deployProtocolContract(workingAccount, protocolContractId, tokenContractId)
     const tokenContract = await deployTokenContract(workingAccount, tokenContractId)
 
     return {
@@ -56,19 +57,35 @@ async function deployTokenContract(workingAccount, contractId) {
     const newPublicKey = await workingAccount.connection.signer.createKey(contractId, networkId);
     const data = [...(await fs.readFile(FLUX_FUNGIBLE_WASM_PATH))];
     await workingAccount.createAndDeployContract(contractId, newPublicKey, data, BALANCE);
-    return new nearApi.Contract(workingAccount, contractId, {
+    const contract = new nearApi.Contract(workingAccount, contractId, {
         viewMethods: tokenViewMethods,
         changeMethods: tokenChangeMethods
     });
+
+    await contract.new(
+        {owner_id: workingAccount.accountId, total_supply: "10000000000000000000000000000000000000"},
+        new BN("300000000000000"),
+        new BN('0')
+    )
+
+    return contract;
 }
-async function deployProtocolContract(workingAccount, contractId) {
+async function deployProtocolContract(workingAccount, contractId, tokenContractId) {
     const newPublicKey = await workingAccount.connection.signer.createKey(contractId, networkId);
     const data = [...(await fs.readFile(FLUX_WASM_PATH))];
     await workingAccount.createAndDeployContract(contractId, newPublicKey, data, BALANCE);
-    return new nearApi.Contract(workingAccount, contractId, {
+    const contract =  new nearApi.Contract(workingAccount, contractId, {
         viewMethods: protocolViewMethods,
         changeMethods: protocolChangeMethods
     });
+
+    await contract.init(
+        {owner: workingAccount.accountId, fun_token_account_id: tokenContractId},
+        new BN("300000000000000"),
+        new BN('0')
+    )
+
+    return contract
 }
 
 function sleep(time) {

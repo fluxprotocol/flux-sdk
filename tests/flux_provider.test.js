@@ -34,15 +34,10 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 		tokenContract
 	} = await testUtils.deployContracts(workingAccount, protocolContractId, tokenContractId);
 
-	// await flux.connect(protocolContractId, tokenContractId, workingAccount, 'http://localhost:3030');
-
 	flux.near = nearjs;
 	flux.account = workingAccount;
 	flux.protocolContract = protocolContract;
 	flux.tokenContract = tokenContract;
-
-	await flux.initProtocol(tokenContractId, workingAccount.accountId)
-	await flux.initTokenContract("100000000000000000000000");
 });
 
 test("Is able to retrieve the accountId ", () => {
@@ -68,8 +63,8 @@ test("Is able to place a limit order", async () => {
 });
 
 test("Is able to cancel an order", async () => {
-	await flux.cancelOrder("0", "0", "0");
-	await flux.cancelOrder("1", "0", "0");
+	await flux.cancelOrder("0", "0", "0", "10");
+	await flux.cancelOrder("1", "0", "0", "10");
 });
 
 test("Is able to fill a limit order", async () => {
@@ -80,10 +75,8 @@ test("Is able to fill a limit order", async () => {
 test("Is able to fill a market order", async () => {
 	await flux.placeOrder("0", "0", "10000", "50");
 	await flux.placeOrder("1", "0", "10000", "50");
-	const binaryPrice = await flux.getMarketPrices("0");
-	const categoricalPrice = await flux.getMarketPrices("1");
-	await flux.placeOrder("0", "1", "10000", binaryPrice[1].toString());
-	await flux.placeOrder("1", "1", "10000", categoricalPrice[1].toString());
+	await flux.placeOrder("0", "1", "10000", "50");
+	await flux.placeOrder("1", "1", "10000", "50");
 });
 
 test("Is able to dynamically sell to the market", async () => {
@@ -93,9 +86,7 @@ test("Is able to dynamically sell to the market", async () => {
 	await flux.placeOrder("2", "0", "20000", "50");
 	await flux.placeOrder("2", "1", "20000", "50");
 	const shareBalance = await flux.getShareBalanceForUserForMarket("2", flux.account.accountId);
-	// console.log("share balance: ", shareBalance)
-	// expect(shareBalance[0]).toBeGreaterThan(0);
-	await flux.dynamicMarketSell("2", "0", "400")
+	await flux.dynamicMarketSell("2", "0", "50", "50")
 });
 
 test("Is able to resolute a market", async () => {
@@ -108,14 +99,14 @@ test("Is able to resolute a market", async () => {
 });
 
 test("Is able to withdraw dispute on a market", async() => {
-	await flux.dispute("1", "1", "10");
+	await flux.dispute("1", "1", toDai(9).toString());
 	await flux.withdrawDisputeStake("1", "1", "1");
 });
 
 test("Is able to dispute a market", async () => {
 	await flux.dispute("0", "1", toDai(10).toString());
 	await flux.dispute("1", "1", toDai(10).toString());
-	});
+});
 
 test("Is able to finalize a market", async () => {
 	await flux.finalize("0", "0");
@@ -126,14 +117,5 @@ test("Is able to claim earnings", async () => {
 	const balance = await flux.getBalance(workingAccount.accountId);
 	await flux.claimEarnings("0", flux.getAccountId());
 	const updatedBalance = await flux.getBalance(workingAccount.accountId);
-	console.log("claim earnings balances", balance, updatedBalance);
-	expect(parseInt(updatedBalance) > parseInt(balance));
-});
-
-test("Is able to claim affiliate earnings", async () => {
-	const balance = await flux.getBalance(workingAccount.accountId);
-	await flux.claimAffiliateEarnings(flux.getAccountId());
-	const updatedBalance = await flux.getBalance(workingAccount.accountId);
-	console.log("affiliate balances", balance, updatedBalance);
 	expect(parseInt(updatedBalance) > parseInt(balance));
 });
