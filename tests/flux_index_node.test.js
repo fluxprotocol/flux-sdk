@@ -9,8 +9,8 @@ test("Is able to connect to the NEAR blockchain & initiate Flux smart contract i
 });
 
 test("can get all markets from index node", async() => {
-	const markets = await flux.getMarkets();
-	const sportsMarkets = await flux.getMarkets({"categories": ["sports"]});
+	const markets = await flux.getMarkets({}, 20, 0);
+	const sportsMarkets = await flux.getMarkets({"categories": ["sports"]}, 20, 0);
 	expect(sportsMarkets.length == 1);
 	
 	const firstMarket = await flux.getMarkets({}, 1);
@@ -18,7 +18,6 @@ test("can get all markets from index node", async() => {
 	
 	const secondMarket = await flux.getMarkets({}, 1, 1);
 	expect(secondMarket.length == 1);
-	expect(secondMarket[0].id == 1);	
 })
 
 test("can get last filled prices for market subset ", async() => {
