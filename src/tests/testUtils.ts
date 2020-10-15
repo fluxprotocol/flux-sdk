@@ -61,7 +61,7 @@ export async function setUpTestConnection() {
 }
 
 
-export function today(amt: number): number {
+export function toDai(amt: number): number {
     return amt * 10 ** 18
 }
 

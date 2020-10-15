@@ -22,8 +22,6 @@ import { Market } from './types';
 const ZERO = new BN("0");
 const MAX_GAS = new BN("300000000000000");
 
-class ProtocolContract implements ProtocolContract {};
-
 interface FluxProvider {
     connected: Boolean;
     indexNodeUrl: string;
@@ -43,10 +41,77 @@ interface FluxProvider {
         customNodeUrl?: string 
     ): void;
     
-    getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
+    signIn(): void;
+    oneClickTxSignIn(): void;
+    signOut(): void;
+    getAccountId(): string;
+    isSignedIn(): boolean;
 
+    setAllowance(escrowAccountId: string, allowance: string): void;
+    getTotalSupply(): Promise<string>;
+    getBalance(ownerId: string): Promise<string>;
+    getAllowance(ownerId: string, escrowAccountId: string): Promise<string>;
+
+    createBinaryMarket(
+        description: string,
+        extraInfo: string,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+        affiliateFeePercentage: number,
+    ) : Promise<string>;
+
+    createCategoricalMarket(
+        description: string,
+        extraInfo: string,
+        outcomes: number, 
+        outcomeTags: Array<string>,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+    ) : Promise<string>;
+
+    createMarket(
+        description: string,
+        extraInfo: string,
+        outcomes: number, 
+        outcomeTags: Array<string>,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+        affiliateFeePercentage: number,
+    ) : Promise<string>;
+
+    getClaimable(marketId: number, accountId: string | undefined): Promise<string>;
+    placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any>;
+    cancelOrder(marketId: number, outcome: number, orderId: number, price: number): Promise<any>;
+    dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any>;
+    resolute(marketId: number, winningOutcome: number, stake: string): Promise<any>;
+    dispute(marketId: number, winningOutcome: number, stake: string): Promise<any>;
+    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any>;
+    finalize(marketId: number, winningOutcome: number | null): Promise<any>;
+    claimEarnings(marketId: number, accountId: string): Promise<any>;
+    
+    getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
+    getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
+    getLastFilledPrices(filter: any, limit: number, offset: number): Promise<any>;
+    getMarket(marketId: number): Promise<Market>;
+    getLastFilledPricesForMarket(marketId: number): Promise<any>;
+	getMarketPrices(marketId: number): Promise<any>;
+	getAvgPricesOnDate(marketId: number, date: string): Promise<any>;
+	getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<any>;
+	getShareBalanceForUserForMarket(marketId: number, accountId: string): Promise<any>;
+	getPriceHistory(marketId: number, startDate: string, endDate: string, dateMetrics: Array<string>): Promise<any>;
+	getOrderbook(marketId: number): Promise<any>;
+	getAffiliateEarnings(accountId: string): Promise<any>;
+	getOpenOrders(accountId: string): Promise<any>;
+	getOrderHistory(accountId: string): Promise<any>;
+	getFinalizedParticipatedMarkets(accountId: string): Promise<any>;
+	getResolutionState(filter: any, limit: number, offset: number): Promise<any>;
+	getTradeEarnings(marketId: number, accountId: string): Promise<any>;
     fetchState(endPoint: string, args: any): Promise<any>;
 }
+
 
 class FluxProvider implements FluxProvider{
     constructor(
@@ -118,12 +183,12 @@ class FluxProvider implements FluxProvider{
 		this.walletConnection!.signOut();
     }
     
-    getAccountId() {
+    getAccountId(): string | undefined {
 		return this.account?.accountId;
 	}
 
-	isSignedIn() {
-		return this.walletConnection?.isSignedIn();
+	isSignedIn(): boolean {
+		return this.walletConnection!.isSignedIn();
     }
     
     /* Token contract on-chain methods */
@@ -140,7 +205,7 @@ class FluxProvider implements FluxProvider{
 		})
 	}
 
-	async getTotalSupply() {
+	async getTotalSupply(): Promise<string>  {
 		return this.tokenContract.get_total_supply();
 	}
 
@@ -150,7 +215,225 @@ class FluxProvider implements FluxProvider{
 
 	async getAllowance(ownerId: string, escrowAccountId: string): Promise<string> {
 		return this.tokenContract.get_allowance({owner_id: ownerId, escrow_account_id: escrowAccountId});
+    }
+    
+    /* Flux protocol on-chain methods */
+    async getClaimable(marketId: number, accountId: string | undefined = this.getAccountId()): Promise<string> {
+		return this.protocolContract.get_claimable({
+			market_id: marketId.toString(),
+			account_id: accountId
+		});
+    }
+    
+    async createBinaryMarket(
+        description: string,
+        extraInfo: string,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+    ) : Promise<string>{
+		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee, 0);
 	}
+
+	async createCategoricalMarket(
+        description: string,
+        extraInfo: string,
+        outcomes: number, 
+        outcomeTags: Array<string>,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+    ) : Promise<string> {
+		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee);
+	}
+
+	async createMarket(
+        description: string,
+        extraInfo: string,
+        outcomes: number, 
+        outcomeTags: Array<string>,
+        categories: Array<string>,
+        endTime: number,
+        marketCreationFee: number,
+    ) : Promise<string> {
+		if (!this.account!.accountId) throw new Error("Need to sign in to perform this method");
+		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
+
+		return this.protocolContract.create_market(
+			{
+				description,
+				extra_info: extraInfo,
+				outcomes: outcomes.toString(),
+				outcome_tags: outcomeTags,
+				categories: categories,
+				end_time: endTime.toString(),
+				creator_fee_percentage: marketCreationFee.toString(),
+				affiliate_fee_percentage: "0",
+				api_source: ""
+			},
+			MAX_GAS,
+			ZERO
+		).catch((err: Error) => {
+			throw err
+		})
+    }
+    
+    async placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any>{
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (outcome < 0) throw new Error("Invalid outcome id");
+		if (price < 0 || price > 99)  throw new Error("Invalid price, price needs to be between 1 and 99");
+
+		return this.protocolContract.place_order(
+			{
+				market_id: marketId.toString(),
+				outcome: outcome.toString(),
+				shares: shares.toString(),
+				price: price.toString(),
+				affiliate_account_id: "",
+			},
+			MAX_GAS,
+			ZERO
+		).catch((err: Error) => {
+			throw err
+		});
+	}
+
+    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (outcome < 0) throw new Error("Invalid outcome id");
+		if (orderId < 0 )  throw new Error("Invalid order id");
+		if (price < 1 || price > 99) throw new Error("Invalid price");
+		
+		return this.protocolContract.cancel_order(
+			{
+				market_id: marketId.toString(),
+				outcome: outcome.toString(),
+				price: price.toString(),
+				order_id: orderId.toString(),
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+    }
+    
+
+    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Market id must be >= 0");
+		if (outcome < 0) throw new Error("Outcome must be >= 0");
+		if (parseInt(shares) < 0) throw new Error("Shares must be >= 0");
+		if (minPrice < 1 || minPrice > 99) throw new Error("Invalid min_price");
+
+		return this.account.functionCall(
+			this.protocolContract.contractId,
+			"dynamic_market_sell",
+			{
+                market_id: marketId.toString(),
+				outcome: outcome.toString(),
+				shares,
+				min_price: minPrice.toString()
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+	}
+
+	async resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+
+		return this.protocolContract.resolute_market(
+			{
+                market_id: marketId.toString(),
+				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
+				stake: stake
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+	}
+
+	async dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+		return this.protocolContract.dispute_market(
+			{
+				market_id: marketId.toString(),
+				winning_outcome: winningOutcome.toString(),
+				stake: stake
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+	}
+
+	async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+		if (disputeRound < 0) throw new Error("Invalid dispute round");
+		if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
+
+		return this.protocolContract.withdraw_dispute_stake(
+			{
+				market_id: marketId.toString(),
+				dispute_round: disputeRound.toString(),
+				outcome: outcome.toString(),
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+    }
+    
+	async finalize(marketId: number, winningOutcome: number | null): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0 || marketId === null) throw new Error("Invalid market id");
+		if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+
+		return this.account.functionCall(
+			this.protocolContract.contractId,
+			"finalize_market",
+			{
+				market_id: marketId.toString(),
+				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+	}
+
+	async claimEarnings(marketId: number, accountId: string): Promise<any> {
+		if (!this.account) throw new Error("Need to sign in to perform this method");
+		if (marketId < 0) throw new Error("Invalid market id");
+
+		return this.protocolContract.claim_earnings(
+			{
+				market_id: marketId.toString(),
+				account_id: accountId
+			},
+			MAX_GAS,
+			ZERO
+        ).catch((err: Error) => {
+            throw err
+        });
+	}
+
 
     /* Indexer view methods */
     async getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>> {
