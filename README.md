@@ -2,18 +2,18 @@
 
 A TypeScript SDK to implement Flux Protocol into any Javascript application
 
-# Documentation
+## Documentation
 
 [Read the Flux-SDK documentation on GitBook](https://fluxprotocol.gitbook.io/)
 
-# Build the project
+### Build the project
 
     npm run build
 
-# Run Test
+### Run Test
 
     npm test
 
-# Coverage
+### Coverage
 
     npm run coverage
