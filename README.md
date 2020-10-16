@@ -8,12 +8,12 @@ A TypeScript SDK to implement Flux Protocol into any Javascript application
 
 # Build the project
 
-    ```npm run build```
+    npm run build
 
 # Run Test
 
-    ```npm test```
+    npm test
 
 # Coverage
 
-    ```npm run coverage```
+    npm run coverage
