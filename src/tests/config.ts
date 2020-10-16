@@ -1,36 +1,8 @@
-export default function getConfig(env: string): any {
+export default function getConfig(env: string) {
+
+	console.log(env)
 	switch (env) {
 	case 'production':
-	case 'mainnet':
-			return {
-					networkId: 'mainnet',
-					nodeUrl: 'https://rpc.mainnet.near.org',
-					walletUrl: 'https://wallet.near.org',
-					helperUrl: 'https://helper.mainnet.near.org',
-			};
-	case 'development':
-	case 'testnet':
-			return {
-					networkId: 'default',
-					nodeUrl: 'https://rpc.testnet.near.org',
-					walletUrl: 'https://wallet.testnet.near.org',
-					helperUrl: 'https://helper.testnet.near.org',
-					masterAccount: 'test.near',
-			};
-	case 'devnet':
-			return {
-					networkId: 'devnet',
-					nodeUrl: 'https://rpc.devnet.near.org',
-					walletUrl: 'https://wallet.devnet.near.org',
-					helperUrl: 'https://helper.devnet.near.org',
-			};
-	case 'betanet':
-			return {
-					networkId: 'betanet',
-					nodeUrl: 'https://rpc.betanet.near.org',
-					walletUrl: 'https://wallet.betanet.near.org',
-					helperUrl: 'https://helper.betanet.near.org',
-			};
 	case 'local':
 			return {
 					networkId: 'local',
@@ -43,12 +15,6 @@ export default function getConfig(env: string): any {
 			return {
 					networkId: 'shared-test',
 					nodeUrl: 'https://rpc.ci-testnet.near.org',
-					masterAccount: 'test.near',
-			};
-	case 'ci-betanet':
-			return {
-					networkId: 'shared-test-staging',
-					nodeUrl: 'https://rpc.ci-betanet.near.org',
 					masterAccount: 'test.near',
 			};
 	default:
