@@ -1,54 +1,25 @@
-# Flux SDK
-Effortlessly create and interact with financial markets.
+# Flux-SDK
 
-## Prerequisites
-* [Node.js](https://nodejs.org/en/)
+A TypeScript SDK to implement Flux Protocol into any Javascript application
 
-## Installation
-Install flux-sdk
-```bash
-npm install --save flux-sdk
-```
+# Documentation
 
-## Usage
+[Read the Flux-SDK documentation on GitBook](https://fluxprotocol.gitbook.io/)
 
-### Initialization
+# Contribute to this library
 
-```js
-import Flux from "flux-sdk";
+1. Install dependencies
 
-(async () => 
-	const flux = await new Flux().connect("development", "flux-protocol-staging");
-)();
-```
+    npm install
 
-### Methods
+2. Run build with:
 
-| Method        | Description           |
-| ------------- |-------------|
-| **connect**(environment: string, fluxContractAddress: string)      | Connect to the NEAR blockchain and initiate a connection with the Flux contract  |
-| **createBinaryMarket**(description: string, extraInfo: string, endTime: number)      | Create a binary (Yes/No) market   |
-| **createCategoricalMarket**(description: string,  extraInfo: string, outcomes: number, outcomeTags: array<string>, endTime: number)      | Create a categorical market   |
-| **placeOrder**(marketId: number, outcome: number, spend: number, pricePerShare: number)       | Place order for a market specified by `marketId` and `outcome`. `spend` is the amount the user wants to spend in total and `pricePerShare` is the amount each share will cost (between 1 - 99)    |
+    npm run build
 
-## Running tests
+# Run Test
 
-Clone the [nearcore](https://nodejs.org/en/) repo, in your prefered directory
-```bash
-git clone https://github.com/nearprotocol/nearcore.git
-```
+    npm test
 
-Run the docker image that has the unit-testable environment
-```bash
-cd ./nearcore
-python ./scripts/start_unittest.py
-```
+# Coverage
 
-When the image is up and running navigate to `/flux-sdk` and run the `npm test`
-
-
-## Future work
-
-* Adding market creator fee's
-* Adding adding a value bearing stable unit of account as a trading principle (eg. Dai)
-* Adding Flux Oracle as the only way to resolute markets
+    npm run coverage

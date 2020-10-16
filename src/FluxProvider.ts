@@ -7,7 +7,14 @@ import {
     Contract,
     keyStores,
 } from "near-api-js";
-import fetch from "node-fetch";
+import nodeFetch from "node-fetch";
+
+let fetch: any;
+if (typeof window !== 'undefined') {
+	fetch = window.fetch;
+} else { 
+	fetch = nodeFetch;
+}
 
 import { 
     NULL_CONTRACT, 
@@ -31,7 +38,8 @@ interface FluxProvider {
     protocolContract: any;
     tokenContract: any;
     walletConnection: WalletConnection | null;
-    account: Account | null;
+	account: Account | null;
+	
     connect(
         protocolContractId: string, 
         tokenContractId: string, 
@@ -40,13 +48,11 @@ interface FluxProvider {
         walletInstance?: WalletConnection, 
         customNodeUrl?: string 
     ): void;
-    
     signIn(): void;
     oneClickTxSignIn(): void;
     signOut(): void;
     getAccountId(): string;
     isSignedIn(): boolean;
-
     setAllowance(escrowAccountId: string, allowance: string): void;
     getTotalSupply(): Promise<string>;
     getBalance(ownerId: string): Promise<string>;
@@ -91,7 +97,6 @@ interface FluxProvider {
     withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any>;
     finalize(marketId: number, winningOutcome: number | null): Promise<any>;
     claimEarnings(marketId: number, accountId: string): Promise<any>;
-    
     getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
     getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
     getLastFilledPrices(filter: any, limit: number, offset: number): Promise<any>;
@@ -111,7 +116,6 @@ interface FluxProvider {
 	getTradeEarnings(marketId: number, accountId: string): Promise<any>;
     fetchState(endPoint: string, args: any): Promise<any>;
 }
-
 
 class FluxProvider implements FluxProvider{
     constructor(
@@ -291,7 +295,7 @@ class FluxProvider implements FluxProvider{
 				outcome: outcome.toString(),
 				shares: shares.toString(),
 				price: price.toString(),
-				affiliate_account_id: "",
+				affiliate_account_id: null,
 			},
 			MAX_GAS,
 			ZERO
@@ -398,7 +402,7 @@ class FluxProvider implements FluxProvider{
             throw err
         });
     }
-    
+
 	async finalize(marketId: number, winningOutcome: number | null): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0 || marketId === null) throw new Error("Invalid market id");
@@ -433,7 +437,6 @@ class FluxProvider implements FluxProvider{
             throw err
         });
 	}
-
 
     /* Indexer view methods */
     async getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>> {
