@@ -1,5 +1,8 @@
 language: nodejs
-
+sudo: required
+before_install:
+  - npm install -g node-gyp
+  
 before_script:
   - npm run build
 
