@@ -3,6 +3,7 @@
 <div align="center">
 
 [![Build Status](https://travis-ci.com/fluxprotocol/flux-sdk.svg?branch=master)](https://travis-ci.com/fluxprotocol/flux-sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 </div>
 
