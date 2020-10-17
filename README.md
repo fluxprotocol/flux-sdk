@@ -4,7 +4,7 @@
 
 [![Build Status](https://travis-ci.com/fluxprotocol/flux-sdk.svg?branch=master)](https://travis-ci.com/fluxprotocol/flux-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version Badge](http://versionbadg.es//fluxprotocol/flux-sdk.svg)](https://npmjs.org/package/flux-sdk)
+[![Version Badge](https://badge.fury.io/js/flux-sdk.svg)](https://npmjs.org/package/flux-sdk)
 </div>
 
 A TypeScript SDK to implement Flux Protocol into any Javascript application
