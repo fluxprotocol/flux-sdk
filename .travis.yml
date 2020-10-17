@@ -1,8 +1,6 @@
-language: nodejs
-sudo: required
-before_install:
-  - npm install -g node-gyp
-  
+language: node_js
+node_js: 14.8.0
+
 before_script:
   - npm run build
 
