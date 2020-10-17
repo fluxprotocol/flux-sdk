@@ -1,5 +1,9 @@
 # Flux-SDK
 
+<div align="center">
+[![Build Status](https://travis-ci.com/fluxprotocol/flux-sdk.svg?branch=master](https://travis-ci.com/fluxprotocol/flux-sdk)
+</div>
+
 A TypeScript SDK to implement Flux Protocol into any Javascript application
 
 ## Documentation
