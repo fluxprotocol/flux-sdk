@@ -6,3 +6,4 @@ before_script:
 
 script:
   - npm t
+  - bash <(curl -s https://codecov.io/bash)
