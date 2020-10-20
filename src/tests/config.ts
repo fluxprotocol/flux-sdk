@@ -1,6 +1,4 @@
 export default function getConfig(env: string) {
-
-	console.log(env)
 	switch (env) {
 	case 'production':
 	case 'local':
