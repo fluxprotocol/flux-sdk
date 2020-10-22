@@ -58,7 +58,7 @@ describe("indexer", () => {
   })
   
   it("can get historic chart data", async () => {
-    const res = await flux.getPriceHistory(0, "2020-07-20", "2020-07-28", ["day"]);
+    const res = await flux.getPriceHistory(0, 1603367842, 1603371442, ["day"]);
   })
   
   it("can get orderbook", async () => {
