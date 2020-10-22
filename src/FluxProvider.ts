@@ -106,7 +106,7 @@ interface FluxProvider {
 	getAvgPricesOnDate(marketId: number, date: string): Promise<any>;
 	getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<any>;
 	getShareBalanceForUserForMarket(marketId: number, accountId: string): Promise<any>;
-	getPriceHistory(marketId: number, startDate: string, endDate: string, dateMetrics: Array<string>): Promise<any>;
+	getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any>;
 	getOrderbook(marketId: number): Promise<any>;
 	getAffiliateEarnings(accountId: string): Promise<any>;
 	getOpenOrders(accountId: string): Promise<any>;
@@ -475,7 +475,7 @@ class FluxProvider implements FluxProvider{
 		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
     }
     
-	async getPriceHistory(marketId: number, startDate: string, endDate: string, dateMetrics: Array<string>): Promise<any> {
+	async getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any> {
 		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate, dateMetrics});
 	}
 
