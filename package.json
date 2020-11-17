@@ -1,8 +1,9 @@
 {
   "name": "flux-sdk",
-  "version": "1.0.12",
+  "version": "1.0.15",
   "description": "",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "jest",
     "coverage": "jest --coverage",

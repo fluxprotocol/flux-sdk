@@ -1,4 +1,4 @@
-import BN from "bn.js";
+const BN = require("bn.js");
 import {
     Near,
     connect,
