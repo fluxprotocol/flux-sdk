@@ -28,6 +28,7 @@ import { Market } from './types';
 
 const ZERO = new BN("0");
 const MAX_GAS = new BN("300000000000000");
+const STORAGE_DEFAULT = new BN("30000000000000000000000");
 
 interface FluxProvider {
     connected: Boolean;
@@ -64,7 +65,7 @@ interface FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        affiliateFeePercentage: number,
+		storageCost: any
     ) : Promise<string>;
 
     createCategoricalMarket(
@@ -74,7 +75,8 @@ interface FluxProvider {
         outcomeTags: Array<string>,
         categories: Array<string>,
         endTime: number,
-        marketCreationFee: number,
+		marketCreationFee: number,
+		storageCost: any
     ) : Promise<string>;
 
     createMarket(
@@ -85,7 +87,7 @@ interface FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        affiliateFeePercentage: number,
+		storageCost: any
     ) : Promise<string>;
 
     getClaimable(marketId: number, accountId: string | undefined): Promise<string>;
@@ -196,14 +198,20 @@ class FluxProvider implements FluxProvider{
     }
     
     /* Token contract on-chain methods */
-    async setAllowance(escrowAccountId: string, allowance: string): Promise<any> {
+    async incAllowance(
+		escrowAccountId: string, 
+		amount: string, 
+		storageCost: any = STORAGE_DEFAULT
+	): Promise<any> {
         if (!this.account) throw new Error("Need to sign in to perform this method");
         
-		return this.tokenContract.set_allowance(
+		return this.tokenContract.inc_allowance(
 			{
 				escrow_account_id: escrowAccountId,
-				allowance: allowance.toString(),
-			}
+				amount: amount.toString(),
+			},
+			MAX_GAS,
+			storageCost
 		).catch((err: Error) => {
 			throw err
 		})
@@ -234,9 +242,10 @@ class FluxProvider implements FluxProvider{
         extraInfo: string,
         categories: Array<string>,
         endTime: number,
-        marketCreationFee: number,
+		marketCreationFee: number,
+		storageCost: any = STORAGE_DEFAULT
     ) : Promise<string>{
-		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee, 0);
+		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee, storageCost);
 	}
 
 	async createCategoricalMarket(
@@ -246,10 +255,11 @@ class FluxProvider implements FluxProvider{
         outcomeTags: Array<string>,
         categories: Array<string>,
         endTime: number,
-        marketCreationFee: number,
+		marketCreationFee: number,
+		storageCost: any = STORAGE_DEFAULT
     ) : Promise<string> {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
-		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee);
+		return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee, storageCost);
 	}
 
 	async createMarket(
@@ -259,7 +269,8 @@ class FluxProvider implements FluxProvider{
         outcomeTags: Array<string>,
         categories: Array<string>,
         endTime: number,
-        marketCreationFee: number,
+		marketCreationFee: number,
+		storageCost: any
     ) : Promise<string> {
 		if (!this.account!.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
@@ -268,22 +279,22 @@ class FluxProvider implements FluxProvider{
 			{
 				description,
 				extra_info: extraInfo,
-				outcomes: outcomes.toString(),
+				outcomes: outcomes,
 				outcome_tags: outcomeTags,
 				categories: categories,
 				end_time: endTime.toString(),
-				creator_fee_percentage: marketCreationFee.toString(),
-				affiliate_fee_percentage: "0",
+				creator_fee_percentage: marketCreationFee,
+				affiliate_fee_percentage: 0,
 				api_source: ""
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
 		).catch((err: Error) => {
 			throw err
 		})
     }
     
-    async placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any>{
+    async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost: any = STORAGE_DEFAULT): Promise<any>{
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
@@ -292,19 +303,19 @@ class FluxProvider implements FluxProvider{
 		return this.protocolContract.place_order(
 			{
 				market_id: marketId.toString(),
-				outcome: outcome.toString(),
+				outcome: outcome,
 				shares: shares.toString(),
-				price: price.toString(),
+				price: price,
 				affiliate_account_id: null,
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
 		).catch((err: Error) => {
 			throw err
 		});
 	}
 
-    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number): Promise<any> {
+    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (outcome < 0) throw new Error("Invalid outcome id");
@@ -314,19 +325,19 @@ class FluxProvider implements FluxProvider{
 		return this.protocolContract.cancel_order(
 			{
 				market_id: marketId.toString(),
-				outcome: outcome.toString(),
-				price: price.toString(),
+				outcome: outcome,
+				price: price,
 				order_id: orderId.toString(),
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
     }
     
 
-    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any> {
+    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
 		if (outcome < 0) throw new Error("Outcome must be >= 0");
@@ -338,18 +349,18 @@ class FluxProvider implements FluxProvider{
 			"dynamic_market_sell",
 			{
                 market_id: marketId.toString(),
-				outcome: outcome.toString(),
+				outcome: outcome,
 				shares,
-				min_price: minPrice.toString()
+				min_price: minPrice
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
 	}
 
-	async resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
+	async resolute(marketId: number, winningOutcome: number | null, stake: string, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
@@ -357,34 +368,34 @@ class FluxProvider implements FluxProvider{
 		return this.protocolContract.resolute_market(
 			{
                 market_id: marketId.toString(),
-				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
+				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome,
 				stake: stake
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
 	}
 
-	async dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
+	async dispute(marketId: number, winningOutcome: number, stake: string, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 		return this.protocolContract.dispute_market(
 			{
 				market_id: marketId.toString(),
-				winning_outcome: winningOutcome.toString(),
+				winning_outcome: winningOutcome,
 				stake: stake
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
 	}
 
-	async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
+	async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 		if (disputeRound < 0) throw new Error("Invalid dispute round");
@@ -394,10 +405,10 @@ class FluxProvider implements FluxProvider{
 			{
 				market_id: marketId.toString(),
 				dispute_round: disputeRound.toString(),
-				outcome: outcome.toString(),
+				outcome: outcome,
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
@@ -413,7 +424,7 @@ class FluxProvider implements FluxProvider{
 			"finalize_market",
 			{
 				market_id: marketId.toString(),
-				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
+				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome,
 			},
 			MAX_GAS,
 			ZERO
@@ -422,7 +433,7 @@ class FluxProvider implements FluxProvider{
         });
 	}
 
-	async claimEarnings(marketId: number, accountId: string): Promise<any> {
+	async claimEarnings(marketId: number, accountId: string, storageCost: any = STORAGE_DEFAULT): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
 
@@ -432,7 +443,7 @@ class FluxProvider implements FluxProvider{
 				account_id: accountId
 			},
 			MAX_GAS,
-			ZERO
+			storageCost
         ).catch((err: Error) => {
             throw err
         });
