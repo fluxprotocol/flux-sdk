@@ -6,7 +6,6 @@ interface Config {
     initialBalance: string
 }
 
-
 export function getConfig(networkName: string, nodeUrl?: string): Config {
     let network: Config;
 	switch(networkName) {

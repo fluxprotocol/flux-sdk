@@ -12,115 +12,46 @@ import nodeFetch from "node-fetch";
 let fetch: any;
 if (typeof window !== 'undefined') {
 	fetch = window.fetch;
-} else { 
+} else {
 	fetch = nodeFetch;
 }
 
-import { 
-    NULL_CONTRACT, 
-    PROTOCOL_CHANGE_METHODS, 
-    PROTOCOL_VIEW_METHODS, 
-    TOKEN_CHANGE_METHODS, 
+import {
+    NULL_CONTRACT,
+    PROTOCOL_CHANGE_METHODS,
+    PROTOCOL_VIEW_METHODS,
+    TOKEN_CHANGE_METHODS,
     TOKEN_VIEW_METHODS
 } from "./constants";
 import { getConfig } from "./utils";
-import { Market } from './types';
+import { Market } from './models/Market';
+import { FilledPrice, FilledPriceCollection } from "./models/FilledPrice";
+import { SdkConfig } from "./models/SdkConfig";
+import { getLastFilledPrices, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getShareBalanceForMarketByAccount } from "./services/MarketsService";
+import { getOrderbooksByMarketId } from "./services/OrderbookService";
+import { getAffiliateEarningsByAccount, getOpenOrdersByAccount, getOrderHistoryByAccount } from "./services/UserService";
+import { MarketPrice } from "./models/MarketPrice";
+import { Order, StrippedOrder } from "./models/Order";
+import { ShareBalance } from "./models/ShareBalance";
 
 const ZERO = new BN("0");
 const MAX_GAS = new BN("300000000000000");
-
-interface FluxProvider {
-    connected: Boolean;
+class FluxProvider {
+    /** @deprecated use sdkConfig.indexNodeUrl instead */
     indexNodeUrl: string;
+    connected: boolean;
     network: string;
     near: Near | null;
     keyStore: keyStores.BrowserLocalStorageKeyStore | keyStores.UnencryptedFileSystemKeyStore | keyStores.InMemoryKeyStore;
     protocolContract: any;
     tokenContract: any;
     walletConnection: WalletConnection | null;
-	account: Account | null;
-	
-    connect(
-        protocolContractId: string, 
-        tokenContractId: string, 
-        accountId?: string, 
-        nearInstance?: Near, 
-        walletInstance?: WalletConnection, 
-        customNodeUrl?: string 
-    ): void;
-    signIn(): void;
-    oneClickTxSignIn(): void;
-    signOut(): void;
-    getAccountId(): string;
-    isSignedIn(): boolean;
-    setAllowance(escrowAccountId: string, allowance: string): void;
-    getTotalSupply(): Promise<string>;
-    getBalance(ownerId: string): Promise<string>;
-    getAllowance(ownerId: string, escrowAccountId: string): Promise<string>;
+    account: Account | null;
+    sdkConfig: SdkConfig;
 
-    createBinaryMarket(
-        description: string,
-        extraInfo: string,
-        categories: Array<string>,
-        endTime: number,
-        marketCreationFee: number,
-        affiliateFeePercentage: number,
-    ) : Promise<string>;
-
-    createCategoricalMarket(
-        description: string,
-        extraInfo: string,
-        outcomes: number, 
-        outcomeTags: Array<string>,
-        categories: Array<string>,
-        endTime: number,
-        marketCreationFee: number,
-    ) : Promise<string>;
-
-    createMarket(
-        description: string,
-        extraInfo: string,
-        outcomes: number, 
-        outcomeTags: Array<string>,
-        categories: Array<string>,
-        endTime: number,
-        marketCreationFee: number,
-        affiliateFeePercentage: number,
-    ) : Promise<string>;
-
-    getClaimable(marketId: number, accountId: string | undefined): Promise<string>;
-    placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any>;
-    cancelOrder(marketId: number, outcome: number, orderId: number, price: number): Promise<any>;
-    dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any>;
-    resolute(marketId: number, winningOutcome: number, stake: string): Promise<any>;
-    dispute(marketId: number, winningOutcome: number, stake: string): Promise<any>;
-    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any>;
-    finalize(marketId: number, winningOutcome: number | null): Promise<any>;
-    claimEarnings(marketId: number, accountId: string): Promise<any>;
-    getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
-    getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>>;
-    getLastFilledPrices(filter: any, limit: number, offset: number): Promise<any>;
-    getMarket(marketId: number): Promise<Market>;
-    getLastFilledPricesForMarket(marketId: number): Promise<any>;
-	getMarketPrices(marketId: number): Promise<any>;
-	getAvgPricesOnDate(marketId: number, date: string): Promise<any>;
-	getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<any>;
-	getShareBalanceForUserForMarket(marketId: number, accountId: string): Promise<any>;
-	getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any>;
-	getOrderbook(marketId: number): Promise<any>;
-	getAffiliateEarnings(accountId: string): Promise<any>;
-	getOpenOrders(accountId: string): Promise<any>;
-	getOrderHistory(accountId: string): Promise<any>;
-	getFinalizedParticipatedMarkets(accountId: string): Promise<any>;
-	getResolutionState(filter: any, limit: number, offset: number): Promise<any>;
-	getTradeEarnings(marketId: number, accountId: string): Promise<any>;
-    fetchState(endPoint: string, args: any): Promise<any>;
-}
-
-class FluxProvider implements FluxProvider{
     constructor(
-        network: string = "testnet", 
-        indexNodeUrl: string = "https://api.flux.market", 
+        network: string = "testnet",
+        indexNodeUrl: string = "https://api.flux.market",
         keyStore: keyStores.BrowserLocalStorageKeyStore | keyStores.UnencryptedFileSystemKeyStore | keyStores.InMemoryKeyStore = new keyStores.BrowserLocalStorageKeyStore()
     ) {
         this.connected = false;
@@ -131,26 +62,29 @@ class FluxProvider implements FluxProvider{
         this.protocolContract = null;
         this.walletConnection = null;
         this.account = null;
+        this.sdkConfig = {
+            indexNodeUrl,
+        };
     }
 
     async connect(
-        protocolContractId: string, 
-        tokenContractId: string, 
-        accountId?: string, 
-        nearInstance?: Near, 
-        walletInstance?: WalletConnection, 
+        protocolContractId: string,
+        tokenContractId: string,
+        accountId?: string,
+        nearInstance?: Near,
+        walletInstance?: WalletConnection,
         customNodeUrl?: string
     ) {
         const networkConfig = getConfig("testnet", customNodeUrl);
         this.near = nearInstance || await connect({...networkConfig, deps: {keyStore: this.keyStore}});
-        
+
         if (typeof window !== 'undefined') {
             this.walletConnection = walletInstance || new WalletConnection(this.near, NULL_CONTRACT);
 			this.account = this.walletConnection.account();
 		} else if (accountId) {
 			this.account = await this.near.account(accountId);
         }
-        
+
         if (this.account === null) throw Error("account not initiated correctly")
 
         this.protocolContract = new Contract(this.account, protocolContractId, {
@@ -170,14 +104,14 @@ class FluxProvider implements FluxProvider{
     signIn() {
         if (!this.connected) throw new Error("Not yet connected");
 		if (this.walletConnection!.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-		this.walletConnection!.requestSignIn(NULL_CONTRACT, "Flux-protocol");	
+		this.walletConnection!.requestSignIn(NULL_CONTRACT, "Flux-protocol");
 	}
 
 	oneClickTxSignIn() {
         if (!this.connected) throw new Error("Not yet connected");
 		if (this.walletConnection!.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
-        const walletConnection = new WalletConnection(this.near!, this.tokenContract!.contractId); 
-		walletConnection.requestSignIn(this.protocolContract!.contractId, "Flux-protocol");	
+        const walletConnection = new WalletConnection(this.near!, this.tokenContract!.contractId);
+		walletConnection.requestSignIn(this.protocolContract!.contractId, "Flux-protocol");
         this.walletConnection = walletConnection;
 	}
 
@@ -186,7 +120,7 @@ class FluxProvider implements FluxProvider{
 		if (!this.walletConnection!.getAccountId()) throw new Error(`No signed in session found`);
 		this.walletConnection!.signOut();
     }
-    
+
     getAccountId(): string | undefined {
 		return this.account?.accountId;
 	}
@@ -194,17 +128,15 @@ class FluxProvider implements FluxProvider{
 	isSignedIn(): boolean {
 		return this.walletConnection!.isSignedIn();
     }
-    
+
     /* Token contract on-chain methods */
     async setAllowance(escrowAccountId: string, allowance: string): Promise<any> {
         if (!this.account) throw new Error("Need to sign in to perform this method");
-        
-		return this.tokenContract.set_allowance(
-			{
-				escrow_account_id: escrowAccountId,
-				allowance: allowance.toString(),
-			}
-		).catch((err: Error) => {
+
+		return this.tokenContract.set_allowance({
+            escrow_account_id: escrowAccountId,
+            allowance: allowance.toString(),
+        }).catch((err: Error) => {
 			throw err
 		})
 	}
@@ -220,7 +152,7 @@ class FluxProvider implements FluxProvider{
 	async getAllowance(ownerId: string, escrowAccountId: string): Promise<string> {
 		return this.tokenContract.get_allowance({owner_id: ownerId, escrow_account_id: escrowAccountId});
     }
-    
+
     /* Flux protocol on-chain methods */
     async getClaimable(marketId: number, accountId: string | undefined = this.getAccountId()): Promise<string> {
 		return this.protocolContract.get_claimable({
@@ -228,21 +160,31 @@ class FluxProvider implements FluxProvider{
 			account_id: accountId
 		});
     }
-    
+
     async createBinaryMarket(
         description: string,
         extraInfo: string,
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
+        affiliateFeePercentage: number = 0,
     ) : Promise<string>{
-		return this.createMarket(description, extraInfo, 2, [], categories, endTime, marketCreationFee, 0);
+		return this.createMarket(
+            description,
+            extraInfo,
+            2,
+            [],
+            categories,
+            endTime,
+            marketCreationFee,
+            affiliateFeePercentage,
+        );
 	}
 
 	async createCategoricalMarket(
         description: string,
         extraInfo: string,
-        outcomes: number, 
+        outcomes: number,
         outcomeTags: Array<string>,
         categories: Array<string>,
         endTime: number,
@@ -255,11 +197,12 @@ class FluxProvider implements FluxProvider{
 	async createMarket(
         description: string,
         extraInfo: string,
-        outcomes: number, 
+        outcomes: number,
         outcomeTags: Array<string>,
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
+        affiliateFeePercentage: number = 0,
     ) : Promise<string> {
 		if (!this.account!.accountId) throw new Error("Need to sign in to perform this method");
 		if (endTime < new Date().getTime()) throw new Error("End time has already passed");
@@ -273,7 +216,7 @@ class FluxProvider implements FluxProvider{
 				categories: categories,
 				end_time: endTime.toString(),
 				creator_fee_percentage: marketCreationFee.toString(),
-				affiliate_fee_percentage: "0",
+				affiliate_fee_percentage: affiliateFeePercentage.toString(),
 				api_source: ""
 			},
 			MAX_GAS,
@@ -282,7 +225,7 @@ class FluxProvider implements FluxProvider{
 			throw err
 		})
     }
-    
+
     async placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any>{
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Invalid market id");
@@ -310,7 +253,7 @@ class FluxProvider implements FluxProvider{
 		if (outcome < 0) throw new Error("Invalid outcome id");
 		if (orderId < 0 )  throw new Error("Invalid order id");
 		if (price < 1 || price > 99) throw new Error("Invalid price");
-		
+
 		return this.protocolContract.cancel_order(
 			{
 				market_id: marketId.toString(),
@@ -324,7 +267,7 @@ class FluxProvider implements FluxProvider{
             throw err
         });
     }
-    
+
 
     async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
@@ -439,60 +382,72 @@ class FluxProvider implements FluxProvider{
 	}
 
     /* Indexer view methods */
-    async getMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>> {
-        return this.fetchState("markets/get", {filter, limit, offset});
+    async getMarkets(filter: any, limit: number, offset: number): Promise<Market[]> {
+        return getMarketsApiCall(this.sdkConfig, {
+            filter,
+            limit,
+            offset,
+        });
     }
 
-    async getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Array<Market>> {
-        return this.fetchState("markets/get_resoluting", {filter, limit, offset});
+    async getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Market[]> {
+        return getResolutingMarketsApiCall(this.sdkConfig, {
+            filter,
+            limit,
+            offset,
+        });
     }
 
-    async getLastFilledPrices(filter: any, limit: number, offset: number): Promise<any> {
-        return this.fetchState("markets/last_filled_prices", {filter, limit, offset});
+    async getLastFilledPrices(filter: any, limit: number, offset: number): Promise<FilledPriceCollection> {
+        return getLastFilledPrices(this.sdkConfig, {
+            filter,
+            limit,
+            offset,
+        });
     }
 
     async getMarket(marketId: number): Promise<Market> {
-        return this.fetchState("market/get", {marketId});
+        return getMarketByIdApiCall(this.sdkConfig, marketId);
     }
 
-    async getLastFilledPricesForMarket(marketId: number): Promise<any> {
-		return await this.fetchState("market/last_filled_prices", {marketId});
+    async getLastFilledPricesForMarket(marketId: number): Promise<FilledPrice> {
+        return getLastFilledPricesByMarketId(this.sdkConfig, marketId);
 	}
 
-	async getMarketPrices(marketId: number): Promise<any>{
-		return await this.fetchState("market/market_prices", {marketId});
+	async getMarketPrices(marketId: number): Promise<MarketPrice[]>{
+        return getMarketPricesById(this.sdkConfig, marketId);
 	}
 
 	async getAvgPricesOnDate(marketId: number, date: string): Promise<any> {
 		return await this.fetchState("market/get_avg_prices_for_date", {marketId, date});
 	}
 
-	async getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<any> {
-		return await this.fetchState("market/get_open_orders_for_user", {marketId, accountId});
+    async getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<StrippedOrder[]> {
+        return getOpenOrdersForMarketByAccount(this.sdkConfig, marketId, accountId);
 	}
 
-	async getShareBalanceForUserForMarket(marketId: number, accountId: string): Promise<any> {
-		return await this.fetchState("market/get_share_balances_for_user", {marketId, accountId});
+	async getShareBalanceForUserForMarket(marketId: number, accountId: string): Promise<ShareBalance[]> {
+        return getShareBalanceForMarketByAccount(this.sdkConfig, marketId, accountId);
     }
-    
+
 	async getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any> {
 		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate, dateMetrics});
 	}
 
 	async getOrderbook(marketId: number): Promise<any> {
-		return await this.fetchState("orderbook/get", {marketId});
+        return getOrderbooksByMarketId(this.sdkConfig, marketId);
 	}
 
 	async getAffiliateEarnings(accountId: string): Promise<any> {
-		return await this.fetchState("user/get_affiliate_earnings", {accountId});
+        return getAffiliateEarningsByAccount(this.sdkConfig, accountId);
 	}
 
-	async getOpenOrders(accountId: string): Promise<any> {
-		return await this.fetchState("user/get_open_orders", {accountId});
+	async getOpenOrders(accountId: string): Promise<Order[]> {
+        return getOpenOrdersByAccount(this.sdkConfig, accountId);
 	}
 
 	async getOrderHistory(accountId: string): Promise<any> {
-		return await this.fetchState("user/get_order_history", {accountId});
+        return getOrderHistoryByAccount(this.sdkConfig, accountId);
 	}
 
 	async getFinalizedParticipatedMarkets(accountId: string): Promise<any> {
@@ -517,9 +472,8 @@ class FluxProvider implements FluxProvider{
 			body: JSON.stringify(args)
 		});
 
-		return await res.json()
+		return await res.json();
 	}
-
-}  
+}
 
 export default FluxProvider;

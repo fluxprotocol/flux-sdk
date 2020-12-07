@@ -23,8 +23,3 @@ export interface Market {
     creation_timestamp: number;
     end_timestamp: number;
 }
-
-/**
- * TODO: Write ResolutingMarket type interface
- * TODO: Write Order type interface
- */
