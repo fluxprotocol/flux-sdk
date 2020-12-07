@@ -36,13 +36,13 @@ describe('chain tests', () => {
             protocolContract,
             tokenContract
         } = await deployContracts(workingAccount, protocolContractId, tokenContractId);
-    
+
         flux.near = near;
         flux.account = workingAccount;
         flux.protocolContract = protocolContract;
         flux.tokenContract = tokenContract;
     });
-        
+
     it("Is able to retrieve the accountId ", () => {
         const accountId = flux.getAccountId();
         expect(accountId).toBe(workingAccount.accountId);
@@ -128,6 +128,4 @@ describe('chain tests', () => {
         const updatedBalance = await flux.getBalance(workingAccount.accountId);
         expect(parseInt(updatedBalance) > parseInt(balance));
     });
-
-    
 });

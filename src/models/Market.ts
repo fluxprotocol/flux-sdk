@@ -23,3 +23,15 @@ export interface Market {
     creation_timestamp: number;
     end_timestamp: number;
 }
+
+export interface MarketApiParams {
+    description: string;
+    extra_info: string;
+    outcomes: string;
+    outcome_tags: string[];
+    categories: string[];
+    end_time: string;
+    creator_fee_percentage: string;
+    affiliate_fee_percentage: string;
+    api_source: string;
+}
