@@ -1,4 +1,6 @@
 import FluxProvider from '../index';
+import ProtocolContract from '../ProtocolContract';
+import TokenContract from '../TokenContract';
 import { Account, keyStores, Near } from 'near-api-js';
 import {
     setUpTestConnection,
@@ -41,6 +43,8 @@ describe('chain tests', () => {
         flux.account = workingAccount;
         flux.protocolContract = protocolContract;
         flux.tokenContract = tokenContract;
+        flux.fluxProtocolContract = new ProtocolContract(workingAccount, protocolContractId);
+        flux.fluxTokenContract = new TokenContract(workingAccount, tokenContractId);
     });
 
     it("Is able to retrieve the accountId ", () => {

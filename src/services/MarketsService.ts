@@ -6,6 +6,7 @@ import { FilledPrice, FilledPriceCollection } from '../models/FilledPrice';
 import { MarketPrice } from '../models/MarketPrice';
 import { ShareBalance } from '../models/ShareBalance';
 import { StrippedOrder } from '../models/Order';
+import { AveragePrice } from '../models/AveragePrice';
 
 /**
  * Fetches all markets withing the given filters
@@ -153,6 +154,47 @@ export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, mark
         body: JSON.stringify({
             marketId,
             accountId,
+        }),
+    });
+
+    return response.json();
+}
+
+/**
+ * Gets the average price on that day
+ * flux.getAvgPricesOnDate(5, 1607416200091);
+ *
+ * @export
+ * @param {SdkConfig} sdkConfig
+ * @param {number} marketId
+ * @param {(string | number)} date Anything that represents a date (is converted on the backend with moment)
+ * @return {Promise<StrippedOrder[]>}
+ */
+export async function getAveragePriceByDate(sdkConfig: SdkConfig, marketId: number, date: string | number): Promise<AveragePrice[]> {
+    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/get_avg_prices_for_date`, {
+        body: JSON.stringify({
+            marketId,
+            date,
+        }),
+    });
+
+    return response.json();
+}
+
+/**
+ * Gets the resolution state
+ *
+ * @export
+ * @param {SdkConfig} sdkConfig
+ * @param {FilterQuery} filters
+ * @return {Promise<any>}
+ */
+export async function getResolutionState(sdkConfig: SdkConfig, filters: FilterQuery): Promise<any> {
+    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/markets/get_resolution_state`, {
+        body: JSON.stringify({
+            filter: filters.filter,
+            limit: filters.limit,
+            offset: filters.offset,
         }),
     });
 

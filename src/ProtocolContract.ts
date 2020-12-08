@@ -78,8 +78,6 @@ class ProtocolContract {
         if (orderId < 0) throw new Error("Invalid order id");
         if (price < 1 || price > 99) throw new Error("Invalid price");
 
-        console.log('Test 1 2 3');
-
         // @ts-ignore
         return this.contract.cancel_order(
             {
@@ -87,6 +85,77 @@ class ProtocolContract {
                 outcome: outcome.toString(),
                 price: price.toString(),
                 order_id: orderId.toString(),
+            },
+            MAX_GAS,
+            ZERO
+        );
+    }
+
+    getClaimable(marketId: number, accountId: string): Promise<string> {
+        // @ts-ignore
+        return this.contract.get_claimable({
+            market_id: marketId.toString(),
+            account_id: accountId
+        });
+    }
+
+    resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
+        if (marketId < 0) throw new Error("Invalid market id");
+        if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+
+        // @ts-ignore
+        return this.contract.resolute_market(
+            {
+                market_id: marketId.toString(),
+                winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome.toString(),
+                stake: stake
+            },
+            MAX_GAS,
+            ZERO
+        );
+    }
+
+    dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
+        if (marketId < 0) throw new Error("Invalid market id");
+        if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+
+        // @ts-ignore
+        return this.contract.dispute_market(
+            {
+                market_id: marketId.toString(),
+                winning_outcome: winningOutcome.toString(),
+                stake: stake
+            },
+            MAX_GAS,
+            ZERO
+        );
+    }
+
+    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
+        if (marketId < 0) throw new Error("Invalid market id");
+        if (disputeRound < 0) throw new Error("Invalid dispute round");
+        if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
+
+        // @ts-ignore
+        return this.contract.withdraw_dispute_stake(
+            {
+                market_id: marketId.toString(),
+                dispute_round: disputeRound.toString(),
+                outcome: outcome.toString(),
+            },
+            MAX_GAS,
+            ZERO
+        );
+    }
+
+    claimEarnings(marketId: number, accountId: string): Promise<any> {
+        if (marketId < 0) throw new Error("Invalid market id");
+
+        // @ts-ignore
+        return this.contract.claim_earnings(
+            {
+                market_id: marketId.toString(),
+                account_id: accountId
             },
             MAX_GAS,
             ZERO
