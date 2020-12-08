@@ -25,14 +25,18 @@ import { getConfig } from "./utils";
 import { Market } from './models/Market';
 import { FilledPrice, FilledPriceCollection } from "./models/FilledPrice";
 import { SdkConfig } from "./models/SdkConfig";
-import { getLastFilledPrices, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getShareBalanceForMarketByAccount } from "./services/MarketsService";
+import { getAveragePriceByDate, getLastFilledPrices, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getResolutionState, getShareBalanceForMarketByAccount } from "./services/MarketsService";
 import { getOrderbooksByMarketId } from "./services/OrderbookService";
-import { getAffiliateEarningsByAccount, getAllOpenOrdersByAccount, getOrderHistoryByAccount } from "./services/UserService";
+import { getAffiliateEarningsByAccount, getAllOpenOrdersByAccount, getOrderHistoryByAccount, getFinalizedParticipatedMarketsByAccount } from "./services/UserService";
 import { MarketPrice } from "./models/MarketPrice";
-import { Order, StrippedOrder } from "./models/Order";
+import { OpenOrder, Order, StrippedOrder } from "./models/Order";
 import { ShareBalance } from "./models/ShareBalance";
 import ProtocolContract from "./ProtocolContract";
 import TokenContract from "./TokenContract";
+import { getTradeEarningsByAccount } from "./services/EarningsService";
+import { Earnings } from "./models/Earnings";
+import { getPriceHistoryByMarket } from "./services/HistoryService";
+import { AveragePrice } from "./models/AveragePrice";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
@@ -107,26 +111,33 @@ class FluxProvider {
 
     /* Account management methods */
     signIn() {
-        if (!this.connected) throw new Error("Not yet connected");
-		if (this.walletConnection!.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+        if (!this.walletConnection) throw new Error("Not yet connected");
+		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
 
-        this.walletConnection!.requestSignIn(NULL_CONTRACT, "Flux-protocol");
+        this.walletConnection.requestSignIn(NULL_CONTRACT, "Flux-protocol");
 	}
 
 	oneClickTxSignIn() {
-        if (!this.connected || !this.fluxTokenContract || !this.fluxProtocolContract) throw new Error("Not yet connected");
-		if (this.walletConnection!.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+        if (!this.walletConnection ||
+            !this.fluxTokenContract ||
+            !this.fluxProtocolContract ||
+            !this.near
+        ) {
+            throw new Error("Not yet connected");
+        }
 
-        const walletConnection = new WalletConnection(this.near!, this.fluxTokenContract.contract.contractId);
+		if (this.walletConnection.getAccountId()) throw new Error(`Already signedin with account: ${this.getAccountId()}`);
+
+        const walletConnection = new WalletConnection(this.near, this.fluxTokenContract.contract.contractId);
 		walletConnection.requestSignIn(this.fluxProtocolContract.contract.contractId, "Flux-protocol");
         this.walletConnection = walletConnection;
 	}
 
 	signOut() {
-		if (!this.near) throw new Error("No connection to NEAR found");
-		if (!this.walletConnection!.getAccountId()) throw new Error(`No signed in session found`);
+		if (!this.near || !this.walletConnection) throw new Error("No connection to NEAR found");
+		if (!this.walletConnection.getAccountId()) throw new Error(`No signed in session found`);
 
-        this.walletConnection!.signOut();
+        this.walletConnection.signOut();
     }
 
     getAccountId(): string | undefined {
@@ -134,7 +145,9 @@ class FluxProvider {
 	}
 
 	isSignedIn(): boolean {
-		return this.walletConnection!.isSignedIn();
+        if (!this.walletConnection) return false;
+
+		return this.walletConnection.isSignedIn();
     }
 
     /* Token contract on-chain methods */
@@ -164,10 +177,10 @@ class FluxProvider {
 
     /* Flux protocol on-chain methods */
     async getClaimable(marketId: number, accountId: string | undefined = this.getAccountId()): Promise<string> {
-		return this.protocolContract.get_claimable({
-			market_id: marketId.toString(),
-			account_id: accountId
-		});
+        if (!this.fluxProtocolContract) throw new Error('Not connected');
+        if (!accountId) throw new Error('accountId is required');
+
+        return this.fluxProtocolContract.getClaimable(marketId, accountId);
     }
 
     async createBinaryMarket(
@@ -242,14 +255,15 @@ class FluxProvider {
     }
 
     async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any> {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
+        if (!this.fluxProtocolContract) throw new Error("Not connected");
+        if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
 		if (outcome < 0) throw new Error("Outcome must be >= 0");
 		if (parseInt(shares) < 0) throw new Error("Shares must be >= 0");
         if (minPrice < 1 || minPrice > 99) throw new Error("Invalid min_price");
 
 		return this.account.functionCall(
-			this.protocolContract.contractId,
+			this.fluxProtocolContract.contract.contractId,
 			"dynamic_market_sell",
 			{
                 market_id: marketId.toString(),
@@ -265,68 +279,31 @@ class FluxProvider {
 	}
 
 	async resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Invalid market id");
-		if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
+        if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-		return this.protocolContract.resolute_market(
-			{
-                market_id: marketId.toString(),
-				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
-				stake: stake
-			},
-			MAX_GAS,
-			ZERO
-        ).catch((err: Error) => {
-            throw err
-        });
+        return this.fluxProtocolContract.resolute(marketId, winningOutcome, stake);
 	}
 
 	async dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Invalid market id");
-		if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
-		return this.protocolContract.dispute_market(
-			{
-				market_id: marketId.toString(),
-				winning_outcome: winningOutcome.toString(),
-				stake: stake
-			},
-			MAX_GAS,
-			ZERO
-        ).catch((err: Error) => {
-            throw err
-        });
+        if (!this.fluxProtocolContract) throw new Error("Not connected");
+
+        return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake);
 	}
 
 	async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Invalid market id");
-		if (disputeRound < 0) throw new Error("Invalid dispute round");
-		if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
+        if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-		return this.protocolContract.withdraw_dispute_stake(
-			{
-				market_id: marketId.toString(),
-				dispute_round: disputeRound.toString(),
-				outcome: outcome.toString(),
-			},
-			MAX_GAS,
-			ZERO
-        ).catch((err: Error) => {
-            throw err
-        });
+        return this.fluxProtocolContract.withdrawDisputeStake(marketId, disputeRound, outcome);
     }
 
-	async finalize(marketId: number, winningOutcome: number | null): Promise<any> {
+	async finalize(marketId: number, winningOutcome: number | null = null): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0 || marketId === null) throw new Error("Invalid market id");
 		if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
-
-        console.log('[] this.protocolContract -> ', this.protocolContract);
+        if (!this.fluxProtocolContract) throw new Error("Not connected");
 
 		return this.account.functionCall(
-			this.protocolContract.contractId,
+			this.fluxProtocolContract.contract.contractId,
 			"finalize_market",
 			{
 				market_id: marketId.toString(),
@@ -340,19 +317,9 @@ class FluxProvider {
 	}
 
 	async claimEarnings(marketId: number, accountId: string): Promise<any> {
-		if (!this.account) throw new Error("Need to sign in to perform this method");
-		if (marketId < 0) throw new Error("Invalid market id");
+		if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-		return this.protocolContract.claim_earnings(
-			{
-				market_id: marketId.toString(),
-				account_id: accountId
-			},
-			MAX_GAS,
-			ZERO
-        ).catch((err: Error) => {
-            throw err
-        });
+		return this.fluxProtocolContract.claimEarnings(marketId, accountId);
 	}
 
     /* Indexer view methods */
@@ -392,8 +359,8 @@ class FluxProvider {
         return getMarketPricesById(this.sdkConfig, marketId);
 	}
 
-	async getAvgPricesOnDate(marketId: number, date: string): Promise<any> {
-		return await this.fetchState("market/get_avg_prices_for_date", {marketId, date});
+	async getAvgPricesOnDate(marketId: number, date: string | number): Promise<AveragePrice[]> {
+        return getAveragePriceByDate(this.sdkConfig, marketId, date);
 	}
 
     async getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<StrippedOrder[]> {
@@ -405,10 +372,10 @@ class FluxProvider {
     }
 
 	async getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any> {
-		return await this.fetchState("history/get_avg_price_per_date_metric", {marketId, startDate, endDate, dateMetrics});
+        return getPriceHistoryByMarket(this.sdkConfig, marketId, startDate, endDate, dateMetrics);
 	}
 
-	async getOrderbook(marketId: number): Promise<any> {
+	async getOrderbook(marketId: number): Promise<OpenOrder[]> {
         return getOrderbooksByMarketId(this.sdkConfig, marketId);
 	}
 
@@ -425,28 +392,19 @@ class FluxProvider {
 	}
 
 	async getFinalizedParticipatedMarkets(accountId: string): Promise<any> {
-		return await this.fetchState("user/get_finalized_participated_markets", {accountId});
+        return getFinalizedParticipatedMarketsByAccount(this.sdkConfig, accountId);
 	}
 
 	async getResolutionState(filter: any, limit: number, offset: number): Promise<any> {
-		return await this.fetchState("markets/get_resolution_state", {filter, limit, offset});
+        return getResolutionState(this.sdkConfig, {
+            filter,
+            limit,
+            offset,
+        });
 	}
 
-	async getTradeEarnings(marketId: number, accountId: string): Promise<any> {
-		return await this.fetchState("earnings/get_trading_earnings", {marketId, accountId});
-	}
-
-    /* Indexer generic fetch interface */
-    async fetchState(endPoint: string, args: any): Promise<any> {
-		const res = await fetch(`${this.indexNodeUrl}/${endPoint}`, {
-			method: "POST",
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(args)
-		});
-
-		return await res.json();
+	async getTradeEarnings(marketId: number, accountId: string): Promise<Earnings[]> {
+        return getTradeEarningsByAccount(this.sdkConfig, marketId, accountId);
 	}
 }
 

@@ -1,3 +1,13 @@
+/**
+ * Currently the model Order is stripped alot.
+ * Maybe we have to return a consistent order object on de back-end side.
+ */
+export interface OpenOrder {
+    depth: string;
+    outcome: string;
+    price: string;
+}
+
 export interface StrippedOrder {
     id: string;
     outcome: string;
