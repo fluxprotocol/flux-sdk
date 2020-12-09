@@ -1,5 +1,6 @@
+import BN from "bn.js";
 import { Account, Contract } from "near-api-js";
-import { TOKEN_CHANGE_METHODS, TOKEN_VIEW_METHODS } from "./constants";
+import { MAX_GAS, TOKEN_CHANGE_METHODS, TOKEN_VIEW_METHODS } from "./constants";
 
 class TokenContract {
     contract: Contract;
@@ -16,12 +17,12 @@ class TokenContract {
         return this.contract.get_total_supply();
     }
 
-    setAllowance(escrowAccountId: string, allowance: string): Promise<any> {
+    incAllowance(escrowAccountId: string, allowance: string, storageCost: BN): Promise<any> {
         // @ts-ignore
-        return this.contract.set_allowance({
+        return this.contract.inc_allowance({
             escrow_account_id: escrowAccountId,
             allowance: allowance.toString(),
-        });
+        }, MAX_GAS, storageCost);
     }
 
     getAllowance(ownerId: string, escrowAccountId: string): Promise<string> {

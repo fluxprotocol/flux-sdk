@@ -1,3 +1,4 @@
+import BN from "bn.js";
 import { Account, Contract } from "near-api-js";
 import { PROTOCOL_CHANGE_METHODS, PROTOCOL_VIEW_METHODS } from "./constants";
 import { MAX_GAS, ZERO } from './constants';
@@ -20,6 +21,7 @@ class ProtocolContract {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
+        storageCost: BN,
         affiliateFeePercentage: number = 0,
         apiSource = "",
     ): Promise<string> {
@@ -39,7 +41,7 @@ class ProtocolContract {
                 api_source: apiSource,
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
@@ -47,7 +49,8 @@ class ProtocolContract {
         marketId: number,
         outcome: number,
         shares: string,
-        price: number
+        price: number,
+        storageCost: BN,
     ): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (outcome < 0) throw new Error("Invalid outcome id");
@@ -63,7 +66,7 @@ class ProtocolContract {
                 affiliate_account_id: null,
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
@@ -71,7 +74,8 @@ class ProtocolContract {
         marketId: number,
         outcome: number,
         orderId: number,
-        price: number
+        price: number,
+        storageCost: BN,
     ): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (outcome < 0) throw new Error("Invalid outcome id");
@@ -82,12 +86,12 @@ class ProtocolContract {
         return this.contract.cancel_order(
             {
                 market_id: marketId.toString(),
-                outcome: outcome.toString(),
-                price: price.toString(),
+                outcome,
+                price,
                 order_id: orderId.toString(),
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
@@ -99,7 +103,7 @@ class ProtocolContract {
         });
     }
 
-    resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
+    resolute(marketId: number, winningOutcome: number | null, stake: string, storageCost: BN): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (winningOutcome! < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 
@@ -107,15 +111,15 @@ class ProtocolContract {
         return this.contract.resolute_market(
             {
                 market_id: marketId.toString(),
-                winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome.toString(),
+                winning_outcome: winningOutcome,
                 stake: stake
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
-    dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
+    dispute(marketId: number, winningOutcome: number, stake: string, storageCost: BN): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (winningOutcome < 0 && winningOutcome !== null) throw new Error("Invalid outcome id");
 
@@ -127,11 +131,11 @@ class ProtocolContract {
                 stake: stake
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
-    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
+    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (disputeRound < 0) throw new Error("Invalid dispute round");
         if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
@@ -144,11 +148,11 @@ class ProtocolContract {
                 outcome: outcome.toString(),
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 
-    claimEarnings(marketId: number, accountId: string): Promise<any> {
+    claimEarnings(marketId: number, accountId: string, storageCost: BN): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
 
         // @ts-ignore
@@ -158,7 +162,7 @@ class ProtocolContract {
                 account_id: accountId
             },
             MAX_GAS,
-            ZERO
+            storageCost,
         );
     }
 }

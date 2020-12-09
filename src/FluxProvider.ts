@@ -1,4 +1,4 @@
-const BN = require("bn.js");
+// const BN = require("bn.js");
 import {
     Near,
     connect,
@@ -20,6 +20,7 @@ import {
     NULL_CONTRACT,
     MAX_GAS,
     ZERO,
+    STORAGE_DEFAULT,
 } from "./constants";
 import { getConfig } from "./utils";
 import { Market } from './models/Market';
@@ -37,6 +38,7 @@ import { getTradeEarningsByAccount } from "./services/EarningsService";
 import { Earnings } from "./models/Earnings";
 import { getPriceHistoryByMarket } from "./services/HistoryService";
 import { AveragePrice } from "./models/AveragePrice";
+import BN from "bn.js";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
@@ -169,10 +171,10 @@ class FluxProvider {
         return this.fluxTokenContract.getAllowance(ownerId, escrowAccountId);
     }
 
-    async setAllowance(escrowAccountId: string, allowance: string): Promise<any> {
+    async incAllowance(escrowAccountId: string, allowance: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxTokenContract) throw new Error('Not connected');
 
-        return this.fluxTokenContract.setAllowance(escrowAccountId, allowance);
+        return this.fluxTokenContract.incAllowance(escrowAccountId, allowance, storageCost);
     }
 
     /* Flux protocol on-chain methods */
@@ -189,7 +191,7 @@ class FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        affiliateFeePercentage: number = 0,
+        storageCost: BN = STORAGE_DEFAULT,
     ) : Promise<string>{
 		return this.createMarket(
             description,
@@ -199,7 +201,7 @@ class FluxProvider {
             categories,
             endTime,
             marketCreationFee,
-            affiliateFeePercentage,
+            storageCost,
         );
 	}
 
@@ -211,10 +213,20 @@ class FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
+        storageCost: BN = STORAGE_DEFAULT,
     ) : Promise<string> {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
 
-        return this.createMarket(description, extraInfo, outcomes, outcomeTags, categories, endTime, marketCreationFee);
+        return this.createMarket(
+            description,
+            extraInfo,
+            outcomes,
+            outcomeTags,
+            categories,
+            endTime,
+            marketCreationFee,
+            storageCost,
+        );
 	}
 
 	async createMarket(
@@ -225,7 +237,7 @@ class FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        affiliateFeePercentage: number = 0,
+        storageCost: BN,
     ) : Promise<string> {
 		if (!this.account || !this.account.accountId) throw new Error("Need to sign in to perform this method");
         if (!this.fluxProtocolContract) throw new Error('Not connected');
@@ -238,23 +250,24 @@ class FluxProvider {
             categories,
             endTime,
             marketCreationFee,
-            affiliateFeePercentage,
+            storageCost,
+            0,
         );
     }
 
-    async placeOrder(marketId: number, outcome: number, shares: string, price: number): Promise<any> {
+    async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price);
+        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price, storageCost);
 	}
 
-    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number): Promise<any> {
+    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.cancelOrder(marketId, outcome, orderId, price);
+        return this.fluxProtocolContract.cancelOrder(marketId, outcome, orderId, price, storageCost);
     }
 
-    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number): Promise<any> {
+    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
         if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
@@ -267,33 +280,33 @@ class FluxProvider {
 			"dynamic_market_sell",
 			{
                 market_id: marketId.toString(),
-				outcome: outcome.toString(),
+				outcome,
 				shares,
-				min_price: minPrice.toString()
+				min_price: minPrice,
 			},
 			MAX_GAS,
-			ZERO
+			storageCost,
         ).catch((err: Error) => {
             throw err
         });
 	}
 
-	async resolute(marketId: number, winningOutcome: number | null, stake: string): Promise<any> {
+    async resolute(marketId: number, winningOutcome: number | null, stake: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.resolute(marketId, winningOutcome, stake);
+        return this.fluxProtocolContract.resolute(marketId, winningOutcome, stake, storageCost);
 	}
 
-	async dispute(marketId: number, winningOutcome: number, stake: string): Promise<any> {
+    async dispute(marketId: number, winningOutcome: number, stake: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake);
+        return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake, storageCost);
 	}
 
-	async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number): Promise<any> {
+    async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.withdrawDisputeStake(marketId, disputeRound, outcome);
+        return this.fluxProtocolContract.withdrawDisputeStake(marketId, disputeRound, outcome, storageCost);
     }
 
 	async finalize(marketId: number, winningOutcome: number | null = null): Promise<any> {
@@ -307,7 +320,7 @@ class FluxProvider {
 			"finalize_market",
 			{
 				market_id: marketId.toString(),
-				winning_outcome: winningOutcome === null ? winningOutcome : winningOutcome!.toString(),
+                winning_outcome: winningOutcome,
 			},
 			MAX_GAS,
 			ZERO
@@ -316,10 +329,10 @@ class FluxProvider {
         });
 	}
 
-	async claimEarnings(marketId: number, accountId: string): Promise<any> {
+    async claimEarnings(marketId: number, accountId: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
 		if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-		return this.fluxProtocolContract.claimEarnings(marketId, accountId);
+		return this.fluxProtocolContract.claimEarnings(marketId, accountId, storageCost);
 	}
 
     /* Indexer view methods */

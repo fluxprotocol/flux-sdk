@@ -9,6 +9,7 @@ import {
     deployContracts,
     toDai
 } from "./testUtils";
+import BN from 'bn.js';
 
 let near: Near;
 let protocolContractId: string;
@@ -18,6 +19,7 @@ let workingAccount: Account;
 let flux: FluxProvider = new FluxProvider("testnet", "https://api.flux.market", new keyStores.InMemoryKeyStore());
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
+const STORAGE_DEFAULT = new BN("13300000000000000000000");
 
 beforeAll(async () => {
     near = await setUpTestConnection();
@@ -53,7 +55,7 @@ describe('chain tests', () => {
     });
 
     it('Is able to set an allowance', async () => {
-        await flux.setAllowance(flux.protocolContract.contractId, '100000000000000000000000');
+        await flux.incAllowance(flux.protocolContract.contractId, '100000000000000000000000', STORAGE_DEFAULT);
         const allowance = await flux.getAllowance(workingAccount.accountId, flux.protocolContract.contractId);
         expect(allowance).toBe("100000000000000000000000");
     });
@@ -66,40 +68,40 @@ describe('chain tests', () => {
 
     it("Is able to create a market", async () => {
         const endTime = new Date().getTime() + 70000 ;
-        await flux.createBinaryMarket("This is a test binary market", "", [] , endTime, 1, 5);
-        await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"],[], endTime, 1);
+        await flux.createBinaryMarket("This is a test binary market", "", [] , endTime, 1, STORAGE_DEFAULT);
+        await flux.createCategoricalMarket("This is a test categorical market", "", 3, ["yes", "no", "maybe"],[], endTime, 1, STORAGE_DEFAULT);
     });
 
     it("Is able to place a limit order", async () => {
-        await flux.placeOrder(0, 0, "50000", 10);
-        await flux.placeOrder(1, 0, "50000", 10);
+        await flux.placeOrder(0, 0, "50000", 10, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 0, "50000", 10, STORAGE_DEFAULT);
     });
 
     it("Is able to cancel an order", async () => {
-        await flux.cancelOrder(0, 0, 0, 10);
-        await flux.cancelOrder(1, 0, 0, 10);
+        await flux.cancelOrder(0, 0, 0, 10, STORAGE_DEFAULT);
+        await flux.cancelOrder(1, 0, 0, 10, STORAGE_DEFAULT);
     });
 
     it("Is able to fill a limit order", async () => {
-        await flux.placeOrder(0,0, "10000", 50);
-        await flux.placeOrder(1, 1, "10000", 50);
+        await flux.placeOrder(0,0, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 1, "10000", 50, STORAGE_DEFAULT);
     });
 
     it("Is able to fill a market order", async () => {
-        await flux.placeOrder(0, 0, "10000", 50);
-        await flux.placeOrder(1, 0, "10000", 50);
-        await flux.placeOrder(0, 1, "10000", 50);
-        await flux.placeOrder(1, 1, "10000", 50);
+        await flux.placeOrder(0, 0, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 0, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 1, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 1, "10000", 50, STORAGE_DEFAULT);
     });
 
     it("Is able to dynamically sell to the market", async () => {
         const endTime = new Date().getTime() + 20000;
-        await flux.createBinaryMarket("This is a test binary market", "", [], endTime, 1, 5);
-        await flux.placeOrder(2, 0, "20000", 50);
-        await flux.placeOrder(2, 0, "20000", 50);
-        await flux.placeOrder(2, 1, "20000", 50);
+        await flux.createBinaryMarket("This is a test binary market", "", [], endTime, 1, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 0, "20000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 0, "20000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 1, "20000", 50, STORAGE_DEFAULT);
         const shareBalance = await flux.getShareBalanceForUserForMarket(2, flux.account!.accountId);
-        await flux.dynamicMarketSell(2, 0, "50", 50)
+        await flux.dynamicMarketSell(2, 0, "50", 50, STORAGE_DEFAULT)
     });
 
     it("Is able to resolute a market", async () => {
@@ -117,8 +119,8 @@ describe('chain tests', () => {
     });
 
     it("Is able to dispute a market", async () => {
-        await flux.dispute(0, 1, toDai(10).toString());
-        await flux.dispute(1, 1, toDai(10).toString());
+        await flux.dispute(0, 1, toDai(10).toString(), STORAGE_DEFAULT);
+        await flux.dispute(1, 1, toDai(10).toString(), STORAGE_DEFAULT);
     });
 
     it("Is able to finalize a market", async () => {
@@ -128,7 +130,7 @@ describe('chain tests', () => {
 
     it("Is able to claim earnings", async () => {
         const balance = await flux.getBalance(workingAccount.accountId);
-        await flux.claimEarnings(0, flux.getAccountId()!);
+        await flux.claimEarnings(0, flux.getAccountId()!, STORAGE_DEFAULT);
         const updatedBalance = await flux.getBalance(workingAccount.accountId);
         expect(parseInt(updatedBalance) > parseInt(balance));
     });
