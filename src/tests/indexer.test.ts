@@ -1,13 +1,21 @@
 import FluxProvider from '../index';
 import { keyStores } from 'near-api-js';
 import { Market } from '../models/Market';
-import { FilledPriceCollection } from '../models/FilledPrice';
 
-const flux: FluxProvider = new FluxProvider("testnet", "https://api.flux.market", new keyStores.InMemoryKeyStore());
+const flux: FluxProvider = new FluxProvider({
+    network: "testnet",
+    indexNodeUrl: "https://api.flux.market",
+    keyStore: new keyStores.InMemoryKeyStore(),
+    protocolContractId: 'u1f92b_u1f680.flux-dev',
+    tokenContractId: 'flux-fun-token2.flux-dev',
+});
 
 describe('init', function() {
     it('connect', async function() {
-      await flux.connect("u1f92b_u1f680.flux-dev", "flux-fun-token2.flux-dev", "flux-dev");
+      await flux.connect({
+          accountId: "flux-dev",
+      });
+
       expect(flux.connected).toEqual(true);
     });
 });

@@ -16,7 +16,11 @@ let protocolContractId: string;
 let tokenContractId: string;
 let workingAccount: Account;
 
-let flux: FluxProvider = new FluxProvider("testnet", "https://api.flux.market", new keyStores.InMemoryKeyStore());
+let flux: FluxProvider = new FluxProvider({
+    network: "testnet",
+    indexNodeUrl: "https://api.flux.market",
+    keyStore: new keyStores.InMemoryKeyStore(),
+});
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 50000;
 const STORAGE_DEFAULT = new BN("13300000000000000000000");

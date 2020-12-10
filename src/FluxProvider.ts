@@ -4,7 +4,6 @@ import {
     connect,
     WalletConnection,
     Account,
-    Contract,
     keyStores,
 } from "near-api-js";
 import nodeFetch from "node-fetch";
@@ -40,13 +39,18 @@ import { getPriceHistoryByMarket } from "./services/HistoryService";
 import { AveragePrice } from "./models/AveragePrice";
 import BN from "bn.js";
 import { toShares } from "./utils/conversionUtils";
+import { ConnectConfig } from "./models/ConnectConfig";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
     indexNodeUrl: string;
     connected: boolean;
+
+    /** @deprecated use sdkConfig.network instead */
     network: string;
     near: Near | null;
+
+    /** @deprecated use sdkConfig.keyStore instead */
     keyStore: keyStores.BrowserLocalStorageKeyStore | keyStores.UnencryptedFileSystemKeyStore | keyStores.InMemoryKeyStore;
 
     /** @deprecated use fluxProtocolContract instead */
@@ -61,49 +65,43 @@ class FluxProvider {
     account: Account | null;
     sdkConfig: SdkConfig;
 
-    constructor(
-        network: string = "testnet",
-        indexNodeUrl: string = "https://api.flux.market",
-        keyStore: keyStores.BrowserLocalStorageKeyStore | keyStores.UnencryptedFileSystemKeyStore | keyStores.InMemoryKeyStore = new keyStores.BrowserLocalStorageKeyStore()
-    ) {
+    constructor(config: Partial<SdkConfig>) {
         this.connected = false;
-        this.indexNodeUrl = indexNodeUrl;
-        this.network = network;
-        this.keyStore = keyStore;
         this.near = null;
-        this.protocolContract = null;
-        this.tokenContract = null;
         this.fluxProtocolContract = null;
         this.fluxTokenContract = null;
         this.walletConnection = null;
         this.account = null;
         this.sdkConfig = {
-            indexNodeUrl,
+            indexNodeUrl: config.indexNodeUrl || "https://api.flux.market",
+            protocolContractId: config.protocolContractId || "",
+            tokenContractId: config.tokenContractId || "",
+            keyStore: config.keyStore || new keyStores.BrowserLocalStorageKeyStore(),
+            network: config.network || "testnet",
         };
+
+        this.protocolContract = null;
+        this.tokenContract = null;
+        this.indexNodeUrl = this.sdkConfig.indexNodeUrl;
+        this.network = this.sdkConfig.network;
+        this.keyStore = this.sdkConfig.keyStore;
     }
 
-    async connect(
-        protocolContractId: string,
-        tokenContractId: string,
-        accountId?: string,
-        nearInstance?: Near,
-        walletInstance?: WalletConnection,
-        customNodeUrl?: string
-    ) {
-        const networkConfig = getConfig("testnet", customNodeUrl);
-        this.near = nearInstance || await connect({ ...networkConfig, deps: { keyStore: this.keyStore }});
+    async connect(connectConfig: ConnectConfig) {
+        const networkConfig = getConfig("testnet", connectConfig.customNodeUrl);
+        this.near = connectConfig.nearInstance || await connect({ ...networkConfig, deps: { keyStore: this.sdkConfig.keyStore }});
 
         if (typeof window !== 'undefined') {
-            this.walletConnection = walletInstance || new WalletConnection(this.near, NULL_CONTRACT);
+            this.walletConnection = connectConfig.walletInstance || new WalletConnection(this.near, NULL_CONTRACT);
 			this.account = this.walletConnection.account();
-		} else if (accountId) {
-			this.account = await this.near.account(accountId);
+        } else if (connectConfig.accountId) {
+            this.account = await this.near.account(connectConfig.accountId);
         }
 
         if (this.account === null) throw Error("account not initiated correctly")
 
-        this.fluxProtocolContract = new ProtocolContract(this.account, protocolContractId);
-        this.fluxTokenContract = new TokenContract(this.account, tokenContractId);
+        this.fluxProtocolContract = new ProtocolContract(this.account, this.sdkConfig.protocolContractId);
+        this.fluxTokenContract = new TokenContract(this.account, this.sdkConfig.tokenContractId);
 
         // For backwards compatibility
         this.tokenContract = this.fluxTokenContract.contract;
