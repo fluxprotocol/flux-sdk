@@ -257,7 +257,7 @@ class FluxProvider {
     async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.placeOrder(marketId, outcome, toShares(shares).toString(), price, storageCost);
+        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price, storageCost);
 	}
 
     async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
