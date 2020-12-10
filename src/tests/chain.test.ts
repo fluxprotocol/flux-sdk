@@ -10,6 +10,7 @@ import {
     toDai
 } from "./testUtils";
 import BN from 'bn.js';
+import { toShares } from '../utils/conversionUtils';
 
 let near: Near;
 let protocolContractId: string;
@@ -77,8 +78,8 @@ describe('chain tests', () => {
     });
 
     it("Is able to place a limit order", async () => {
-        await flux.placeOrder(0, 0, "50000", 10, STORAGE_DEFAULT);
-        await flux.placeOrder(1, 0, "50000", 10, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 0, toShares("50000").toString(), 10, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 0, toShares("50000").toString(), 10, STORAGE_DEFAULT);
     });
 
     it("Is able to cancel an order", async () => {
@@ -87,23 +88,23 @@ describe('chain tests', () => {
     });
 
     it("Is able to fill a limit order", async () => {
-        await flux.placeOrder(0, 0, "10000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(1, 1, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 0, toShares("10000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 1, toShares("10000").toString(), 50, STORAGE_DEFAULT);
     });
 
     it("Is able to fill a market order", async () => {
-        await flux.placeOrder(0, 0, "10000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(1, 0, "10000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(0, 1, "10000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(1, 1, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 0, toShares("10000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 0, toShares("10000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 1, toShares("10000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(1, 1, toShares("10000").toString(), 50, STORAGE_DEFAULT);
     });
 
     it("Is able to dynamically sell to the market", async () => {
         const endTime = new Date().getTime() + 20000;
         await flux.createBinaryMarket("This is a test binary market", "", [], endTime, 1, STORAGE_DEFAULT);
-        await flux.placeOrder(2, 0, "20000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(2, 0, "20000", 50, STORAGE_DEFAULT);
-        await flux.placeOrder(2, 1, "20000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 0, toShares("20000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 0, toShares("20000").toString(), 50, STORAGE_DEFAULT);
+        await flux.placeOrder(2, 1, toShares("20000").toString(), 50, STORAGE_DEFAULT);
         const shareBalance = await flux.getShareBalanceForUserForMarket(2, flux.account!.accountId);
         await flux.dynamicMarketSell(2, 0, "50", 50, STORAGE_DEFAULT)
     });
