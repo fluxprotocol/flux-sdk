@@ -106,7 +106,7 @@ describe('chain tests', () => {
         await flux.placeOrder(2, 0, toShares("20000").toString(), 50, STORAGE_DEFAULT);
         await flux.placeOrder(2, 1, toShares("20000").toString(), 50, STORAGE_DEFAULT);
         const shareBalance = await flux.getShareBalanceForUserForMarket(2, flux.account!.accountId);
-        await flux.dynamicMarketSell(2, 0, "50", 50, STORAGE_DEFAULT)
+        await flux.dynamicMarketSell(2, 0, toShares("50").toString(), 50, STORAGE_DEFAULT)
     });
 
     it("Is able to resolute a market", async () => {

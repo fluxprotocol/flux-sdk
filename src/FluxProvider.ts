@@ -270,8 +270,8 @@ class FluxProvider {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
         if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
-		if (outcome < 0) throw new Error("Outcome must be >= 0");
-		if (parseInt(shares) < 0) throw new Error("Shares must be >= 0");
+        if (outcome < 0) throw new Error("Outcome must be >= 0");
+        if (new BN(shares).isNeg()) throw new Error("Shares must be >= 0");
         if (minPrice < 1 || minPrice > 99) throw new Error("Invalid min_price");
 
 		return this.account.functionCall(
