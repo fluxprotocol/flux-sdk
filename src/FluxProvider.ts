@@ -302,11 +302,14 @@ class FluxProvider {
         return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake, storageCost);
 	}
 
-    async withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async withdrawResolutionStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.withdrawDisputeStake(marketId, disputeRound, outcome, storageCost);
+        return this.fluxProtocolContract.withdrawResolutionStake(marketId, disputeRound, outcome, storageCost);
     }
+
+    /** @deprecated use withdrawResolutionStake instead */
+    withdrawDisputeStake = this.withdrawResolutionStake;
 
 	async finalize(marketId: number, winningOutcome: number | null = null): Promise<any> {
 		if (!this.account) throw new Error("Need to sign in to perform this method");

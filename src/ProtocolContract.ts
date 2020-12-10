@@ -128,24 +128,24 @@ class ProtocolContract {
             {
                 market_id: marketId.toString(),
                 winning_outcome: winningOutcome,
-                stake: stake
+                stake: stake,
             },
             MAX_GAS,
             storageCost,
         );
     }
 
-    withdrawDisputeStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN): Promise<any> {
+    withdrawResolutionStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN): Promise<any> {
         if (marketId < 0) throw new Error("Invalid market id");
         if (disputeRound < 0) throw new Error("Invalid dispute round");
         if (outcome < 0 && outcome !== null) throw new Error("Invalid outcome");
 
         // @ts-ignore
-        return this.contract.withdraw_dispute_stake(
+        return this.contract.withdraw_resolution_stake(
             {
                 market_id: marketId.toString(),
-                dispute_round: disputeRound.toString(),
-                outcome: outcome.toString(),
+                dispute_round: disputeRound,
+                outcome: outcome,
             },
             MAX_GAS,
             storageCost,
