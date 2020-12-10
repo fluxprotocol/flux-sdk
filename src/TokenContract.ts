@@ -17,11 +17,11 @@ class TokenContract {
         return this.contract.get_total_supply();
     }
 
-    incAllowance(escrowAccountId: string, allowance: string, storageCost: BN): Promise<any> {
+    incAllowance(escrowAccountId: string, amount: string, storageCost: BN): Promise<any> {
         // @ts-ignore
         return this.contract.inc_allowance({
             escrow_account_id: escrowAccountId,
-            allowance: allowance.toString(),
+            amount,
         }, MAX_GAS, storageCost);
     }
 

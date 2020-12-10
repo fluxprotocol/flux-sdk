@@ -39,6 +39,7 @@ import { Earnings } from "./models/Earnings";
 import { getPriceHistoryByMarket } from "./services/HistoryService";
 import { AveragePrice } from "./models/AveragePrice";
 import BN from "bn.js";
+import { toShares } from "./utils/conversionUtils";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
@@ -171,10 +172,10 @@ class FluxProvider {
         return this.fluxTokenContract.getAllowance(ownerId, escrowAccountId);
     }
 
-    async incAllowance(escrowAccountId: string, allowance: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async incAllowance(escrowAccountId: string, amount: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxTokenContract) throw new Error('Not connected');
 
-        return this.fluxTokenContract.incAllowance(escrowAccountId, allowance, storageCost);
+        return this.fluxTokenContract.incAllowance(escrowAccountId, amount, storageCost);
     }
 
     /* Flux protocol on-chain methods */
@@ -258,7 +259,7 @@ class FluxProvider {
     async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price, storageCost);
+        return this.fluxProtocolContract.placeOrder(marketId, outcome, toShares(shares).toString(), price, storageCost);
 	}
 
     async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {

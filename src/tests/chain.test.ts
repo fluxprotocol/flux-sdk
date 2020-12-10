@@ -83,7 +83,7 @@ describe('chain tests', () => {
     });
 
     it("Is able to fill a limit order", async () => {
-        await flux.placeOrder(0,0, "10000", 50, STORAGE_DEFAULT);
+        await flux.placeOrder(0, 0, "10000", 50, STORAGE_DEFAULT);
         await flux.placeOrder(1, 1, "10000", 50, STORAGE_DEFAULT);
     });
 

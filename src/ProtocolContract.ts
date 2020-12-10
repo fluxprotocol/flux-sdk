@@ -32,12 +32,12 @@ class ProtocolContract {
             {
                 description,
                 extra_info: extraInfo,
-                outcomes: outcomes.toString(),
+                outcomes,
                 outcome_tags: outcomeTags,
                 categories: categories,
                 end_time: endTime.toString(),
-                creator_fee_percentage: marketCreationFee.toString(),
-                affiliate_fee_percentage: affiliateFeePercentage.toString(),
+                creator_fee_percentage: marketCreationFee,
+                affiliate_fee_percentage: affiliateFeePercentage,
                 api_source: apiSource,
             },
             MAX_GAS,
@@ -60,9 +60,9 @@ class ProtocolContract {
         return this.contract.place_order(
             {
                 market_id: marketId.toString(),
-                outcome: outcome.toString(),
-                shares: shares,
-                price: price.toString(),
+                outcome: outcome,
+                shares: shares.toString(),
+                price,
                 affiliate_account_id: null,
             },
             MAX_GAS,
@@ -127,7 +127,7 @@ class ProtocolContract {
         return this.contract.dispute_market(
             {
                 market_id: marketId.toString(),
-                winning_outcome: winningOutcome.toString(),
+                winning_outcome: winningOutcome,
                 stake: stake
             },
             MAX_GAS,
