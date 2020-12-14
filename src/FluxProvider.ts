@@ -65,7 +65,7 @@ class FluxProvider {
     account: Account | null;
     sdkConfig: SdkConfig;
 
-    constructor(config: Partial<SdkConfig>) {
+    constructor(config: Partial<SdkConfig> = {}) {
         this.connected = false;
         this.near = null;
         this.fluxProtocolContract = null;
@@ -87,7 +87,7 @@ class FluxProvider {
         this.keyStore = this.sdkConfig.keyStore;
     }
 
-    async connect(connectConfig: ConnectConfig) {
+    async connect(connectConfig: ConnectConfig = {}) {
         const networkConfig = getConfig("testnet", connectConfig.customNodeUrl);
         this.near = connectConfig.nearInstance || await connect({ ...networkConfig, deps: { keyStore: this.sdkConfig.keyStore }});
 
@@ -170,10 +170,10 @@ class FluxProvider {
         return this.fluxTokenContract.getAllowance(ownerId, escrowAccountId);
     }
 
-    async incAllowance(escrowAccountId: string, amount: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async incAllowance(escrowAccountId: string, amount: string, storageCost?: BN): Promise<any> {
         if (!this.fluxTokenContract) throw new Error('Not connected');
 
-        return this.fluxTokenContract.incAllowance(escrowAccountId, amount, storageCost);
+        return this.fluxTokenContract.incAllowance(escrowAccountId, amount, storageCost || STORAGE_DEFAULT);
     }
 
     /* Flux protocol on-chain methods */
@@ -212,7 +212,7 @@ class FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        storageCost: BN = STORAGE_DEFAULT,
+        storageCost?: BN,
     ) : Promise<string> {
 		if (outcomes < 3) throw new Error("Need more than two outcomes & outcome tags, otherwise create a binary market");
 
@@ -224,7 +224,7 @@ class FluxProvider {
             categories,
             endTime,
             marketCreationFee,
-            storageCost,
+            storageCost || STORAGE_DEFAULT,
         );
 	}
 
@@ -236,7 +236,7 @@ class FluxProvider {
         categories: Array<string>,
         endTime: number,
         marketCreationFee: number,
-        storageCost: BN,
+        storageCost?: BN,
     ) : Promise<string> {
 		if (!this.account || !this.account.accountId) throw new Error("Need to sign in to perform this method");
         if (!this.fluxProtocolContract) throw new Error('Not connected');
@@ -249,24 +249,24 @@ class FluxProvider {
             categories,
             endTime,
             marketCreationFee,
-            storageCost,
+            storageCost || STORAGE_DEFAULT,
             0,
         );
     }
 
-    async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async placeOrder(marketId: number, outcome: number, shares: string, price: number, storageCost?: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price, storageCost);
+        return this.fluxProtocolContract.placeOrder(marketId, outcome, shares, price, storageCost || STORAGE_DEFAULT);
 	}
 
-    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async cancelOrder(marketId: number, outcome: number, orderId: number, price: number, storageCost: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.cancelOrder(marketId, outcome, orderId, price, storageCost);
+        return this.fluxProtocolContract.cancelOrder(marketId, outcome, orderId, price, storageCost || STORAGE_DEFAULT);
     }
 
-    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async dynamicMarketSell(marketId: number, outcome: number, shares: string, minPrice: number, storageCost?: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
         if (!this.account) throw new Error("Need to sign in to perform this method");
 		if (marketId < 0) throw new Error("Market id must be >= 0");
@@ -284,28 +284,28 @@ class FluxProvider {
 				min_price: minPrice,
 			},
 			MAX_GAS,
-			storageCost,
+			storageCost || STORAGE_DEFAULT,
         ).catch((err: Error) => {
             throw err
         });
 	}
 
-    async resolute(marketId: number, winningOutcome: number | null, stake: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async resolute(marketId: number, winningOutcome: number | null, stake: string, storageCost?: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.resolute(marketId, winningOutcome, stake, storageCost);
+        return this.fluxProtocolContract.resolute(marketId, winningOutcome, stake, storageCost || STORAGE_DEFAULT);
 	}
 
-    async dispute(marketId: number, winningOutcome: number, stake: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async dispute(marketId: number, winningOutcome: number, stake: string, storageCost?: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake, storageCost);
+        return this.fluxProtocolContract.dispute(marketId, winningOutcome, stake, storageCost || STORAGE_DEFAULT);
 	}
 
-    async withdrawResolutionStake(marketId: number, disputeRound: number, outcome: number, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async withdrawResolutionStake(marketId: number, disputeRound: number, outcome: number, storageCost?: BN): Promise<any> {
         if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-        return this.fluxProtocolContract.withdrawResolutionStake(marketId, disputeRound, outcome, storageCost);
+        return this.fluxProtocolContract.withdrawResolutionStake(marketId, disputeRound, outcome, storageCost || STORAGE_DEFAULT);
     }
 
     /** @deprecated use withdrawResolutionStake instead */
@@ -331,10 +331,10 @@ class FluxProvider {
         });
 	}
 
-    async claimEarnings(marketId: number, accountId: string, storageCost: BN = STORAGE_DEFAULT): Promise<any> {
+    async claimEarnings(marketId: number, accountId: string, storageCost?: BN): Promise<any> {
 		if (!this.fluxProtocolContract) throw new Error("Not connected");
 
-		return this.fluxProtocolContract.claimEarnings(marketId, accountId, storageCost);
+		return this.fluxProtocolContract.claimEarnings(marketId, accountId, storageCost || STORAGE_DEFAULT);
 	}
 
     /* Indexer view methods */
