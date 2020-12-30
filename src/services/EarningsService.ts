@@ -1,6 +1,7 @@
 import { Earnings } from "../models/Earnings";
+import { GraphQLResponse } from "../models/GraphQLResponse";
 import { SdkConfig } from "../models/SdkConfig";
-import fetchRequest from "../utils/fetchRequest";
+import fetchRequest, { graphQLRequest } from "../utils/fetchRequest";
 
 /**
  * Get's all trading earnings for a specific user
@@ -12,12 +13,18 @@ import fetchRequest from "../utils/fetchRequest";
  * @return {Promise<Earnings[]>}
  */
 export async function getTradeEarningsByAccount(sdkConfig: SdkConfig, marketId: number, accountId: string): Promise<Earnings[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/earnings/get_trading_earnings`, {
-        body: JSON.stringify({
-            marketId,
-            accountId,
-        }),
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query Earnings($accountId: String!, $marketId: String!) {
+            earnings: getEarningsForMarket(marketId: $marketId, accountId: $accountId) {
+                outcome
+                earnings
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
+        accountId: accountId,
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+    return jsonData.data.earnings;
 }

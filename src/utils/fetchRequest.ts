@@ -30,3 +30,17 @@ export default function fetchRequest(input: string, options?: RequestInit): Prom
 
     return fetch(input, requestOptions);
 }
+
+interface GraphQLVariables {
+    [key: string]: any;
+}
+
+export function graphQLRequest(url: string, query: string, variables: GraphQLVariables): Promise<Response> {
+    return fetchRequest(url, {
+        body: JSON.stringify({
+            operationName: null,
+            query,
+            variables,
+        }),
+    });
+}

@@ -5,3 +5,8 @@ export interface FilledPrice {
 export interface FilledPriceCollection {
     [marketId: string]: FilledPrice;
 }
+
+export interface LastFilledPrice {
+    price: number;
+    outcome: number;
+}

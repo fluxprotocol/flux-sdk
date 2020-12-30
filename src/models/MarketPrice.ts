@@ -1,4 +1,5 @@
 export interface MarketPrice {
+    price: number;
     depth: string;
-    marketPrice: number;
+    outcome: number;
 }

@@ -1,12 +1,14 @@
 import { Market } from '../models/Market';
 import { FilterQuery } from '../models/FilterQuery';
 import { SdkConfig } from '../models/SdkConfig';
-import fetchRequest from '../utils/fetchRequest';
-import { FilledPrice, FilledPriceCollection } from '../models/FilledPrice';
+import fetchRequest, { graphQLRequest } from '../utils/fetchRequest';
+import { FilledPrice, FilledPriceCollection, LastFilledPrice } from '../models/FilledPrice';
 import { MarketPrice } from '../models/MarketPrice';
 import { ShareBalance } from '../models/ShareBalance';
-import { StrippedOrder } from '../models/Order';
+import { Order, StrippedOrder } from '../models/Order';
 import { AveragePrice } from '../models/AveragePrice';
+import { Paginated } from '../models/Paginated';
+import { GraphQLResponse } from '../models/GraphQLResponse';
 
 /**
  * Fetches all markets withing the given filters
@@ -14,18 +16,40 @@ import { AveragePrice } from '../models/AveragePrice';
  * @export
  * @param {SdkConfig} sdkConfig
  * @param {FilterQuery} filters
- * @return {Promise<Market[]>}
+ * @return {Promise<Paginated<Market>>}
  */
-export async function getMarketsApiCall(sdkConfig: SdkConfig, filters: FilterQuery): Promise<Market[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/markets/get`, {
-        body: JSON.stringify({
-            filter: filters.filter,
-            limit: filters.limit,
-            offset: filters.offset,
-        }),
+export async function getMarketsApiCall(sdkConfig: SdkConfig, filters: FilterQuery = {}): Promise<Paginated<Market>> {
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query Markets($limit: Int, $offset: Int, $categories: [String]) {
+            markets: getMarkets(filters: { expired: true, limit: $limit, offset: $offset, categories: $categories }) {
+                total
+                items {
+                    volume
+                    id
+                    description
+                    extra_info
+                    creator
+                    cap_creation_date
+                    end_time
+                    outcomes
+                    outcomes_tags
+                    categories
+                    volume
+                    creator_fee_percentage
+                    resolution_fee_percentage
+                    affiliate_fee_percentage
+                    api_source
+                }
+            }
+        }
+    `, {
+        limit: filters.limit || 0,
+        offset: filters.offset || 0,
+        categories: filters.filter?.categories || [],
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+    return jsonData.data.markets;
 }
 
 /**
@@ -36,14 +60,34 @@ export async function getMarketsApiCall(sdkConfig: SdkConfig, filters: FilterQue
  * @param {number} marketId
  * @return {Promise<Market>}
  */
-export async function getMarketByIdApiCall(sdkConfig: SdkConfig, marketId: number): Promise<Market> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/get`, {
-        body: JSON.stringify({
-            marketId,
-        }),
+export async function getMarketByIdApiCall(sdkConfig: SdkConfig, marketId: number): Promise<Market | null> {
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query Market($marketId: String!) {
+            market: getMarket(id: $marketId) {
+                volume
+                id
+                description
+                extra_info
+                creator
+                cap_creation_date
+                end_time
+                outcomes
+                outcomes_tags
+                categories
+                volume
+                creator_fee_percentage
+                resolution_fee_percentage
+                affiliate_fee_percentage
+                api_source
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+
+    return jsonData.data.market;
 }
 
 /**
@@ -94,14 +138,32 @@ export async function getLastFilledPrices(sdkConfig: SdkConfig, filters: FilterQ
  * @param {number} marketId
  * @return {Promise<FilledPrice>}
  */
-export async function getLastFilledPricesByMarketId(sdkConfig: SdkConfig, marketId: number): Promise<FilledPrice> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/last_filled_prices`, {
-        body: JSON.stringify({
-            marketId,
-        }),
-    });
+export async function getLastFilledPricesByMarketId(sdkConfig: SdkConfig, marketId: number): Promise<LastFilledPrice[]> {
+    try {
+        const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+            query Market($marketId: String!) {
+                market: getMarket(id: $marketId) {
+                    lastFilledPrices {
+                        price
+                        outcome
+                    }
+                }
+            }
+        `, {
+            marketId: marketId.toString(),
+        });
 
-    return response.json();
+        const jsonData: GraphQLResponse<any> = await response.json();
+
+        if (!jsonData.data.market) {
+            return [];
+        }
+
+        return jsonData.data.market.lastFilledPrices;
+    } catch (error) {
+        console.error('[getLastFilledPricesByMarketId]', error);
+        return [];
+    }
 }
 
 /**
@@ -113,13 +175,21 @@ export async function getLastFilledPricesByMarketId(sdkConfig: SdkConfig, market
  * @return {Promise<any>}
  */
 export async function getMarketPricesById(sdkConfig: SdkConfig, marketId: number): Promise<MarketPrice[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/market_prices`, {
-        body: JSON.stringify({
-            marketId,
-        }),
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query MarketPrices($marketId: String!) {
+            prices: getMarketPrices(marketId: $marketId) {
+                price
+                depth
+                outcome
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+
+    return jsonData.data.prices;
 }
 
 /**
@@ -131,14 +201,26 @@ export async function getMarketPricesById(sdkConfig: SdkConfig, marketId: number
  * @return {Promise<any>}
  */
 export async function getShareBalanceForMarketByAccount(sdkConfig: SdkConfig, marketId: number, accountId: string): Promise<ShareBalance[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/get_share_balances_for_user`, {
-        body: JSON.stringify({
-            marketId,
-            accountId,
-        }),
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query UserBalances($accountId: String!, $marketId: String!) {
+            userBalances: getUserBalances(accountId: $accountId, marketId: $marketId) {
+                id
+                account_id
+                market_id
+                outcome
+                shares_balance
+                tokens_to_spend
+                tokens_spent
+                avg_price_per_share
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
+        accountId: accountId,
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+    return jsonData.data.userBalances;
 }
 
 /**
@@ -149,15 +231,34 @@ export async function getShareBalanceForMarketByAccount(sdkConfig: SdkConfig, ma
  * @param {number} marketId
  * @return {Promise<any>}
  */
-export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, marketId: number, accountId: string): Promise<StrippedOrder[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/get_open_orders_for_user`, {
-        body: JSON.stringify({
-            marketId,
-            accountId,
-        }),
+export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, marketId: number): Promise<Order[]> {
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query OpenOrders($marketId: String!) {
+            openOrders: getOrdersForMarket(marketId: $marketId, filters: { closed: false }) {
+                id
+                order_id
+                market_id
+                creator
+                outcome
+                spend
+                shares
+                fill_price
+                price
+                filled
+                shares_filling
+                shares_filled
+                affiliate_account_id
+                block_height
+                closed
+                cap_creation_date
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+    return jsonData.data.openOrders;
 }
 
 /**
@@ -171,14 +272,28 @@ export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, mark
  * @return {Promise<StrippedOrder[]>}
  */
 export async function getAveragePriceByDate(sdkConfig: SdkConfig, marketId: number, date: string | number): Promise<AveragePrice[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/market/get_avg_prices_for_date`, {
-        body: JSON.stringify({
-            marketId,
-            date,
-        }),
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query AveragePriceForDay($marketId: String!, $date: String!) {
+            averagePrice: getAveragePriceForDay(marketId: $marketId, beginTimestamp: $date) {
+                pointKey
+                dataPoints {
+                    outcome
+                    price
+                }
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
+        date: date.toString(),
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+
+    if (jsonData.data.averagePrice) {
+        return [];
+    }
+
+    return jsonData.data.averagePrice.dataPoints;
 }
 
 /**

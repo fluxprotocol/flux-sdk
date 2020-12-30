@@ -4,7 +4,8 @@ import { Market } from '../models/Market';
 
 const flux: FluxProvider = new FluxProvider({
     network: "testnet",
-    indexNodeUrl: "https://api.flux.market",
+    // indexNodeUrl: "https://api.flux.market",
+    indexNodeUrl: 'http://localhost:1337/graphql',
     keyStore: new keyStores.InMemoryKeyStore(),
     protocolContractId: 'u1f92b_u1f680.flux-dev',
     tokenContractId: 'flux-fun-token2.flux-dev',

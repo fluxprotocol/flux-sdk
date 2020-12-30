@@ -16,7 +16,7 @@ export interface StrippedOrder {
     shares_filled: string;
 }
 
-export interface Order extends StrippedOrder {
+export interface LegacyOrder extends StrippedOrder {
     affiliate_account_id: string;
     closed: boolean;
     creation_time: number;
@@ -25,4 +25,23 @@ export interface Order extends StrippedOrder {
     market_id: string;
     outcome_tags: string[];
     spend: string;
+}
+
+export interface Order {
+    id: string
+    order_id: string
+    market_id: string
+    creator: string
+    outcome: number
+    spend: string
+    shares: string
+    fill_price: number
+    price: number
+    filled: string
+    shares_filling: string
+    shares_filled: string
+    affiliate_account_id: string
+    block_height: string
+    closed: boolean
+    cap_creation_date: string
 }
