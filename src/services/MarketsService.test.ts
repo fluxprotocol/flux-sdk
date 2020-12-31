@@ -1,6 +1,6 @@
 import { InMemoryKeyStore } from "near-api-js/lib/key_stores";
 import { SdkConfig } from "../models/SdkConfig";
-import { getAveragePriceByDate, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getShareBalanceForMarketByAccount } from "./MarketsService";
+import { getAveragePriceByDate, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getShareBalanceForMarketByAccount } from "./MarketsService";
 
 describe("MarketsService", () => {
     let sdkConfig: SdkConfig = {
@@ -25,6 +25,14 @@ describe("MarketsService", () => {
             const result = await getMarketByIdApiCall(sdkConfig, 0);
 
             expect(result).not.toBeNull();
+        });
+    });
+
+    describe("getResolutingMarketsApiCall", () => {
+        it("should be able to get the current resoluting markets", async () => {
+            const result = await getResolutingMarketsApiCall(sdkConfig);
+
+            expect(Array.isArray(result)).toBe(true);
         });
     });
 
@@ -55,10 +63,10 @@ describe("MarketsService", () => {
 
     describe("getOpenOrdersForMarketByAccount", () => {
         it("should be able to get the open orders for a specific market", async () => {
-            const result = await getOpenOrdersForMarketByAccount(sdkConfig, 0);
+            const result = await getOpenOrdersForMarketByAccount(sdkConfig, 0, "test.near");
 
             expect(result.length).toBeGreaterThan(0);
-            expect(result[0].id).not.toBe(null);
+            expect(result[0].id).not.toBeUndefined();
         });
     });
 
@@ -67,7 +75,8 @@ describe("MarketsService", () => {
             const result = await getAveragePriceByDate(sdkConfig, 0, 1609311411798);
 
             expect(result.length).toBeGreaterThan(0);
-            expect(result[0].outcome).not.toBeNull();
+            expect(result[0].outcome).not.toBeUndefined();
+            expect(result[0].price).not.toBeUndefined();
         });
     });
 });

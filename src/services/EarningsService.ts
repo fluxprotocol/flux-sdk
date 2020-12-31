@@ -1,7 +1,7 @@
 import { Earnings } from "../models/Earnings";
 import { GraphQLResponse } from "../models/GraphQLResponse";
 import { SdkConfig } from "../models/SdkConfig";
-import fetchRequest, { graphQLRequest } from "../utils/fetchRequest";
+import { graphQLRequest } from "../utils/fetchRequest";
 
 /**
  * Get's all trading earnings for a specific user

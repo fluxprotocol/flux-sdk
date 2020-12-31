@@ -23,7 +23,7 @@ import {
 } from "./constants";
 import { getConfig } from "./utils";
 import { Market } from './models/Market';
-import { FilledPrice, FilledPriceCollection } from "./models/FilledPrice";
+import { FilledPrice, FilledPriceCollection, LastFilledPrice } from "./models/FilledPrice";
 import { SdkConfig } from "./models/SdkConfig";
 import { getAveragePriceByDate, getLastFilledPrices, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getResolutionState, getShareBalanceForMarketByAccount } from "./services/MarketsService";
 import { getOrderbooksByMarketId } from "./services/OrderbookService";
@@ -40,6 +40,8 @@ import { AveragePrice } from "./models/AveragePrice";
 import BN from "bn.js";
 import { toShares } from "./utils/conversionUtils";
 import { ConnectConfig } from "./models/ConnectConfig";
+import { Paginated } from "./models/Paginated";
+import { DateMetric } from "./models/DateMetric";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
@@ -338,7 +340,7 @@ class FluxProvider {
 	}
 
     /* Indexer view methods */
-    async getMarkets(filter: any, limit: number, offset: number): Promise<Market[]> {
+    async getMarkets(filter: any, limit: number, offset: number): Promise<Paginated<Market>> {
         return getMarketsApiCall(this.sdkConfig, {
             filter,
             limit,
@@ -362,11 +364,11 @@ class FluxProvider {
         });
     }
 
-    async getMarket(marketId: number): Promise<Market> {
+    async getMarket(marketId: number): Promise<Market | null> {
         return getMarketByIdApiCall(this.sdkConfig, marketId);
     }
 
-    async getLastFilledPricesForMarket(marketId: number): Promise<FilledPrice> {
+    async getLastFilledPricesForMarket(marketId: number): Promise<LastFilledPrice[]> {
         return getLastFilledPricesByMarketId(this.sdkConfig, marketId);
 	}
 
@@ -378,7 +380,7 @@ class FluxProvider {
         return getAveragePriceByDate(this.sdkConfig, marketId, date);
 	}
 
-    async getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<StrippedOrder[]> {
+    async getOpenOrdersForUserForMarket(marketId: number, accountId: string): Promise<Order[]> {
         return getOpenOrdersForMarketByAccount(this.sdkConfig, marketId, accountId);
 	}
 
@@ -386,8 +388,8 @@ class FluxProvider {
         return getShareBalanceForMarketByAccount(this.sdkConfig, marketId, accountId);
     }
 
-	async getPriceHistory(marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any> {
-        return getPriceHistoryByMarket(this.sdkConfig, marketId, startDate, endDate, dateMetrics);
+	async getPriceHistory(marketId: number, startDate: number, endDate?: number, dateMetrics?: DateMetric): Promise<any> {
+        return getPriceHistoryByMarket(this.sdkConfig, marketId, startDate, dateMetrics, endDate);
 	}
 
 	async getOrderbook(marketId: number): Promise<OpenOrder[]> {

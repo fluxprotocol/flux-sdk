@@ -2,13 +2,14 @@ import { Market } from '../models/Market';
 import { FilterQuery } from '../models/FilterQuery';
 import { SdkConfig } from '../models/SdkConfig';
 import fetchRequest, { graphQLRequest } from '../utils/fetchRequest';
-import { FilledPrice, FilledPriceCollection, LastFilledPrice } from '../models/FilledPrice';
+import { FilledPriceCollection, LastFilledPrice } from '../models/FilledPrice';
 import { MarketPrice } from '../models/MarketPrice';
 import { ShareBalance } from '../models/ShareBalance';
 import { Order, StrippedOrder } from '../models/Order';
 import { AveragePrice } from '../models/AveragePrice';
 import { Paginated } from '../models/Paginated';
 import { GraphQLResponse } from '../models/GraphQLResponse';
+import { ResolutionWindow } from '../models/ResolutionWindow';
 
 /**
  * Fetches all markets withing the given filters
@@ -39,6 +40,10 @@ export async function getMarketsApiCall(sdkConfig: SdkConfig, filters: FilterQue
                     resolution_fee_percentage
                     affiliate_fee_percentage
                     api_source
+                    lastFilledPrices {
+                        outcome
+                        price
+                    }
                 }
             }
         }
@@ -79,6 +84,10 @@ export async function getMarketByIdApiCall(sdkConfig: SdkConfig, marketId: numbe
                 resolution_fee_percentage
                 affiliate_fee_percentage
                 api_source
+                lastFilledPrices {
+                    outcome
+                    price
+                }
             }
         }
     `, {
@@ -98,36 +107,46 @@ export async function getMarketByIdApiCall(sdkConfig: SdkConfig, marketId: numbe
  * @param {FilterQuery} filters
  * @return {Promise<Market[]>}
  */
-export async function getResolutingMarketsApiCall(sdkConfig: SdkConfig, filters: FilterQuery): Promise<Market[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/markets/get_resoluting`, {
-        body: JSON.stringify({
-            filter: filters.filter,
-            limit: filters.limit,
-            offset: filters.offset,
-        }),
-    });
+export async function getResolutingMarketsApiCall(sdkConfig: SdkConfig): Promise<ResolutionWindow[]> {
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query ResolutingMarket {
+            resoluting: getResoluting {
+                round
+                required_bond_size
+                end_time
+                market {
+                    id
+                    creator
+                    description
+                    extra_info
+                    outcomes
+                    outcomes_tags
+                    categories
+                    end_time
+                    creator_fee_percentage
+                    resolution_fee_percentage
+                    affiliate_fee_percentage
+                    api_source
+                    cap_creation_date
+                    volume
+                    state {
+                        winning_outcome
+                        finalized
+                        disputed
+                        resoluted
+                    }
+                }
+            }
+        }
+    `, {});
 
-    return response.json();
-}
+    const jsonData: GraphQLResponse<any> = await response.json();
 
-/**
- * Gets the last prices that where filled in all markets
- *
- * @export
- * @param {SdkConfig} sdkConfig
- * @param {FilterQuery} filters
- * @return {Promise<FilledPriceCollection>}
- */
-export async function getLastFilledPrices(sdkConfig: SdkConfig, filters: FilterQuery): Promise<FilledPriceCollection> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/markets/last_filled_prices`, {
-        body: JSON.stringify({
-            filter: filters.filter,
-            limit: filters.limit,
-            offset: filters.offset,
-        }),
-    });
+    if (!jsonData.data.resoluting) {
+        return [];
+    }
 
-    return response.json();
+    return jsonData.data.resoluting;
 }
 
 /**
@@ -231,10 +250,13 @@ export async function getShareBalanceForMarketByAccount(sdkConfig: SdkConfig, ma
  * @param {number} marketId
  * @return {Promise<any>}
  */
-export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, marketId: number): Promise<Order[]> {
+export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, marketId: number, accountId: string): Promise<Order[]> {
     const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
-        query OpenOrders($marketId: String!) {
-            openOrders: getOrdersForMarket(marketId: $marketId, filters: { closed: false }) {
+        query OpenOrders($marketId: String!, $accountId: String!) {
+            openOrders: getOrdersForMarket(
+                marketId: $marketId
+                filters: { closed: false, creator: $accountId }
+            ) {
                 id
                 order_id
                 market_id
@@ -255,6 +277,7 @@ export async function getOpenOrdersForMarketByAccount(sdkConfig: SdkConfig, mark
         }
     `, {
         marketId: marketId.toString(),
+        accountId,
     });
 
     const jsonData: GraphQLResponse<any> = await response.json();
@@ -288,30 +311,9 @@ export async function getAveragePriceByDate(sdkConfig: SdkConfig, marketId: numb
     });
 
     const jsonData: GraphQLResponse<any> = await response.json();
-
-    if (jsonData.data.averagePrice) {
+    if (!jsonData.data.averagePrice) {
         return [];
     }
 
     return jsonData.data.averagePrice.dataPoints;
-}
-
-/**
- * Gets the resolution state
- *
- * @export
- * @param {SdkConfig} sdkConfig
- * @param {FilterQuery} filters
- * @return {Promise<any>}
- */
-export async function getResolutionState(sdkConfig: SdkConfig, filters: FilterQuery): Promise<any> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/markets/get_resolution_state`, {
-        body: JSON.stringify({
-            filter: filters.filter,
-            limit: filters.limit,
-            offset: filters.offset,
-        }),
-    });
-
-    return response.json();
 }

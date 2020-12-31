@@ -1,3 +1,8 @@
+interface LastFilledPrice {
+    outcome: number;
+    price: number;
+}
+
 export interface Market {
     id: string;
     creator: string;
@@ -15,6 +20,6 @@ export interface Market {
     volume: string
     orderbooks?: any[];
     prices?: any[];
-    lastFilledPrices: any[];
+    lastFilledPrices: LastFilledPrice[];
     state: any[];
 }

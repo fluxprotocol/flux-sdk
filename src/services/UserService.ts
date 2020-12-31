@@ -1,24 +1,8 @@
+import { GraphQLResponse } from "../models/GraphQLResponse";
+import { Market } from "../models/Market";
 import { Order } from "../models/Order";
 import { SdkConfig } from "../models/SdkConfig";
-import fetchRequest from "../utils/fetchRequest";
-
-/**
- * Gets the affiliate earnings for a specific account
- *
- * @export
- * @param {SdkConfig} sdkConfig
- * @param {string} accountId
- * @return {Promise<any>}
- */
-export async function getAffiliateEarningsByAccount(sdkConfig: SdkConfig, accountId: string): Promise<any> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/user/get_affiliate_earnings`, {
-        body: JSON.stringify({
-            accountId,
-        }),
-    });
-
-    return response.json();
-}
+import { graphQLRequest } from "../utils/fetchRequest";
 
 /**
  * Gets all open order for a specific account
@@ -29,31 +13,45 @@ export async function getAffiliateEarningsByAccount(sdkConfig: SdkConfig, accoun
  * @return {Promise<Order[]>}
  */
 export async function getAllOpenOrdersByAccount(sdkConfig: SdkConfig, accountId: string): Promise<Order[]> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/user/get_open_orders`, {
-        body: JSON.stringify({
-            accountId,
-        }),
-    });
+    try {
+        const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+            query AccountInfo($accountId: String!) {
+                account: getAccountInfo(accountId: $accountId) {
+                    openOrders {
+                        id
+                        order_id
+                        market_id
+                        creator
+                        outcome
+                        spend
+                        shares
+                        fill_price
+                        price
+                        filled
+                        shares_filling
+                        shares_filled
+                        affiliate_account_id
+                        block_height
+                        closed
+                        cap_creation_date
+                    }
+                }
+            }
+        `, {
+            accountId: accountId.toString(),
+        });
 
-    return response.json();
-}
+        const jsonData: GraphQLResponse<any> = await response.json();
 
-/**
- * Gets the order history of a specific account
- *
- * @export
- * @param {SdkConfig} sdkConfig
- * @param {string} accountId
- * @return {*}  {Promise<any>}
- */
-export async function getOrderHistoryByAccount(sdkConfig: SdkConfig, accountId: string): Promise<any> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/user/get_order_history`, {
-        body: JSON.stringify({
-            accountId,
-        }),
-    });
+        if (!jsonData.data.account) {
+            return [];
+        }
 
-    return response.json();
+        return jsonData.data.account.openOrders;
+    } catch (error) {
+        console.error('[getAllOpenOrdersByAccount]', error);
+        return [];
+    }
 }
 
 /**
@@ -64,12 +62,35 @@ export async function getOrderHistoryByAccount(sdkConfig: SdkConfig, accountId: 
  * @param {string} accountId
  * @return {Promise<any>}
  */
-export async function getFinalizedParticipatedMarketsByAccount(sdkConfig: SdkConfig, accountId: string): Promise<any> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/user/get_finalized_participated_markets`, {
-        body: JSON.stringify({
-            accountId,
-        }),
-    });
+export async function getFinalizedParticipatedMarketsByAccount(sdkConfig: SdkConfig, accountId: string): Promise<Market[]> {
+    try {
+        const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+            query ParticipatedMarkets($accountId: String!) {
+                markets: getFinalizedParticipatedMarkets(accountId: $accountId) {
+                    id
+                    creator
+                    description
+                    extra_info
+                    outcomes
+                    outcomes_tags
+                    categories
+                    end_time
+                    creator_fee_percentage
+                    resolution_fee_percentage
+                    affiliate_fee_percentage
+                    api_source
+                    cap_creation_date
+                }
+            }
+        `, {
+            accountId: accountId.toString(),
+        });
 
-    return response.json();
+        const jsonData: GraphQLResponse<any> = await response.json();
+
+        return jsonData.data.markets;
+    } catch (error) {
+        console.error('[getFinalizedParticipatedMarketsByAccount]', error);
+        return [];
+    }
 }

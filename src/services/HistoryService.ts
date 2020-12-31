@@ -1,5 +1,9 @@
+import { DateMetric } from "../models/DateMetric";
+import { GraphQLResponse } from "../models/GraphQLResponse";
+import { PriceHistoryPoint } from "../models/PriceHistoryPoint";
 import { SdkConfig } from "../models/SdkConfig";
-import fetchRequest from "../utils/fetchRequest";
+import { graphQLRequest } from "../utils/fetchRequest";
+
 
 /**
  * Gets the price history of a given market
@@ -12,15 +16,24 @@ import fetchRequest from "../utils/fetchRequest";
  * @param {Array<string>} dateMetrics
  * @return {Promise<any>}
  */
-export async function getPriceHistoryByMarket(sdkConfig: SdkConfig, marketId: number, startDate: number, endDate: number, dateMetrics: Array<string>): Promise<any> {
-    const response = await fetchRequest(`${sdkConfig.indexNodeUrl}/history/get_avg_price_per_date_metric`, {
-        body: JSON.stringify({
-            marketId,
-            startDate,
-            endDate,
-            dateMetrics,
-        }),
+export async function getPriceHistoryByMarket(sdkConfig: SdkConfig, marketId: number, startDate: number, dateMetric = DateMetric.hour, endDate?: number): Promise<PriceHistoryPoint[]> {
+    const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+        query PriceHistory($marketId: String!, $startDate: String!, $endDate: String, $dateMetric: DateMetric!) {
+            prices: getAveragePriceHistory(marketId: $marketId, beginTimestamp: $startDate, endTimestamp: $endDate, dateMetric: $dateMetric) {
+                pointKey
+                dataPoints {
+                    outcome
+                    price
+                }
+            }
+        }
+    `, {
+        marketId: marketId.toString(),
+        startDate: startDate.toString(),
+        dateMetric: dateMetric,
+        endDate: endDate?.toString(),
     });
 
-    return response.json();
+    const jsonData: GraphQLResponse<any> = await response.json();
+    return jsonData.data.prices;
 }
