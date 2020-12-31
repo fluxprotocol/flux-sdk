@@ -94,3 +94,53 @@ export async function getFinalizedParticipatedMarketsByAccount(sdkConfig: SdkCon
         return [];
     }
 }
+
+/**
+ * Gets all orders that where closed or from markets that are still open
+ *
+ * @export
+ * @param {SdkConfig} sdkConfig
+ * @param {string} accountId
+ * @return {*}
+ */
+export async function getOrderHistoryByAccount(sdkConfig: SdkConfig, accountId: string): Promise<Order[]> {
+    try {
+        const response = await graphQLRequest(`${sdkConfig.indexNodeUrl}`, `
+            query ParticipatedMarkets($accountId: String!) {
+                account: getAccountInfo(accountId: $accountId) {
+                    orderHistory {
+                        id
+                        order_id
+                        market_id
+                        creator
+                        outcome
+                        spend
+                        shares
+                        fill_price
+                        price
+                        filled
+                        shares_filling
+                        shares_filled
+                        affiliate_account_id
+                        block_height
+                        closed
+                        cap_creation_date
+                    }
+                }
+            }
+        `, {
+            accountId: accountId.toString(),
+        });
+
+        const jsonData: GraphQLResponse<any> = await response.json();
+
+        if (!jsonData.data.account) {
+            return [];
+        }
+
+        return jsonData.data.account.orderHistory;
+    } catch (error) {
+        console.error('[getOrderHistoryByAccount]', error);
+        return [];
+    }
+}

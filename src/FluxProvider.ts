@@ -25,9 +25,9 @@ import { getConfig } from "./utils";
 import { Market } from './models/Market';
 import { FilledPrice, FilledPriceCollection, LastFilledPrice } from "./models/FilledPrice";
 import { SdkConfig } from "./models/SdkConfig";
-import { getAveragePriceByDate, getLastFilledPrices, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getResolutionState, getShareBalanceForMarketByAccount } from "./services/MarketsService";
+import { getAveragePriceByDate, getLastFilledPricesByMarketId, getMarketByIdApiCall, getMarketPricesById, getMarketsApiCall, getOpenOrdersForMarketByAccount, getResolutingMarketsApiCall, getShareBalanceForMarketByAccount } from "./services/MarketsService";
 import { getOrderbooksByMarketId } from "./services/OrderbookService";
-import { getAffiliateEarningsByAccount, getAllOpenOrdersByAccount, getOrderHistoryByAccount, getFinalizedParticipatedMarketsByAccount } from "./services/UserService";
+import { getAllOpenOrdersByAccount, getOrderHistoryByAccount, getFinalizedParticipatedMarketsByAccount } from "./services/UserService";
 import { MarketPrice } from "./models/MarketPrice";
 import { OpenOrder, Order, StrippedOrder } from "./models/Order";
 import { ShareBalance } from "./models/ShareBalance";
@@ -42,6 +42,7 @@ import { toShares } from "./utils/conversionUtils";
 import { ConnectConfig } from "./models/ConnectConfig";
 import { Paginated } from "./models/Paginated";
 import { DateMetric } from "./models/DateMetric";
+import { ResolutionWindow } from "./models/ResolutionWindow";
 
 class FluxProvider {
     /** @deprecated use sdkConfig.indexNodeUrl instead */
@@ -348,20 +349,8 @@ class FluxProvider {
         });
     }
 
-    async getResolutingMarkets(filter: any, limit: number, offset: number): Promise<Market[]> {
-        return getResolutingMarketsApiCall(this.sdkConfig, {
-            filter,
-            limit,
-            offset,
-        });
-    }
-
-    async getLastFilledPrices(filter: any, limit: number, offset: number): Promise<FilledPriceCollection> {
-        return getLastFilledPrices(this.sdkConfig, {
-            filter,
-            limit,
-            offset,
-        });
+    async getResolutingMarkets(): Promise<ResolutionWindow[]> {
+        return getResolutingMarketsApiCall(this.sdkConfig);
     }
 
     async getMarket(marketId: number): Promise<Market | null> {
@@ -394,11 +383,7 @@ class FluxProvider {
 
 	async getOrderbook(marketId: number): Promise<OpenOrder[]> {
         return getOrderbooksByMarketId(this.sdkConfig, marketId);
-	}
-
-	async getAffiliateEarnings(accountId: string): Promise<any> {
-        return getAffiliateEarningsByAccount(this.sdkConfig, accountId);
-	}
+    }
 
 	async getOpenOrders(accountId: string): Promise<Order[]> {
         return getAllOpenOrdersByAccount(this.sdkConfig, accountId);
@@ -410,14 +395,6 @@ class FluxProvider {
 
 	async getFinalizedParticipatedMarkets(accountId: string): Promise<any> {
         return getFinalizedParticipatedMarketsByAccount(this.sdkConfig, accountId);
-	}
-
-	async getResolutionState(filter: any, limit: number, offset: number): Promise<any> {
-        return getResolutionState(this.sdkConfig, {
-            filter,
-            limit,
-            offset,
-        });
 	}
 
 	async getTradeEarnings(marketId: number, accountId: string): Promise<Earnings[]> {

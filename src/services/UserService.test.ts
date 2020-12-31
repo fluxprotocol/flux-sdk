@@ -1,6 +1,6 @@
 import { InMemoryKeyStore } from "near-api-js/lib/key_stores";
 import { SdkConfig } from "../models/SdkConfig";
-import { getAffiliateEarningsByAccount, getAllOpenOrdersByAccount, getFinalizedParticipatedMarketsByAccount } from "./UserService";
+import { getAllOpenOrdersByAccount, getFinalizedParticipatedMarketsByAccount, getOrderHistoryByAccount } from "./UserService";
 
 describe("UserService", () => {
     let sdkConfig: SdkConfig = {
@@ -10,17 +10,6 @@ describe("UserService", () => {
         protocolContractId: '',
         tokenContractId: '',
     };
-
-    describe.skip("getAffiliateEarningsByAccount", () => {
-        it("should be able to get affiliate earnings", async () => {
-            const result = await getAffiliateEarningsByAccount(sdkConfig, "test.near");
-
-            expect(result.length).toBeGreaterThan(0);
-            expect(result[0].outcome).not.toBeUndefined();
-            expect(result[0].depth).not.toBeUndefined();
-            expect(result[0].price).not.toBeUndefined();
-        });
-    });
 
     describe("getAllOpenOrdersByAccount", () => {
         it("should get all open orders by account", async () => {
@@ -37,6 +26,16 @@ describe("UserService", () => {
             const result = await getFinalizedParticipatedMarketsByAccount(sdkConfig, "test.near");
 
             expect(Array.isArray(result)).toBe(true);
+        });
+    });
+
+    describe("getOrderHistoryByAccount", () => {
+        it("should get the order history of a user", async () => {
+            const result = await getOrderHistoryByAccount(sdkConfig, "test.near");
+
+            expect(result).toBeDefined();
+            expect(result[0]).toBeDefined();
+            expect(result[0].creator).toBe("test.near");
         });
     });
 });
